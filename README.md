@@ -1,4 +1,4 @@
-# rust-events-oriented-arc
+# rust-events-oriented-arch
 
 Basic application to learn Rust and events oriented architecture.
 
@@ -59,13 +59,11 @@ The API for the web project is served on http://localhost:8000.
    3.2. Remove the old Kafka and Zookeeper containers.
    3.3. Retry starting Kafka and Zookeeper.
 
-By following these steps, you should be able to resolve any startup issues and successfully start Kafka and Zookeeper.
-
 ## References
 
 Special thanks to the contributors of the following repositories:
 
-https://github.com/wpcodevo/rust-jwt-hs256
-https://github.com/microsoft/cookiecutter-rust-actix-clean-architecture
-https://github.com/ArtRand/kafka-actix-example
-https://github.com/actix/examples
+- https://github.com/wpcodevo/rust-jwt-hs256
+- https://github.com/microsoft/cookiecutter-rust-actix-clean-architecture
+- https://github.com/ArtRand/kafka-actix-example
+- https://github.com/actix/examples
