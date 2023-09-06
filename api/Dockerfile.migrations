@@ -1,0 +1,14 @@
+ARG RUST_VERSION=1.72.0
+ARG APP_NAME=api
+FROM rust:${RUST_VERSION}-slim-bullseye AS build
+ARG APP_NAME
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y  \
+  libpq-dev
+
+RUN cargo install  diesel_cli --no-default-features --features postgres
+
+COPY ./migrations /app/migrations
+
+CMD ["diesel","migration","run"]

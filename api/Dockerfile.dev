@@ -1,0 +1,32 @@
+ARG RUST_VERSION=1.72.0
+ARG APP_NAME=api
+FROM rust:${RUST_VERSION}-slim-bullseye AS build
+ARG APP_NAME
+WORKDIR /app
+
+# dependencies to compile the Kafka client
+RUN apt-get update && apt-get install -y build-essential \
+  curl \
+  openssl libssl-dev \
+  pkg-config \
+  python \
+  valgrind \
+  zlib1g-dev
+
+# dependencies to compile diesel client
+RUN apt-get install -y  \
+  libpq-dev
+
+COPY Cargo.toml Cargo.lock  ./
+
+RUN mkdir src
+RUN echo "fn main() {}" > ./src/main.rs
+
+RUN cargo build
+
+RUN cargo install cargo-watch
+COPY . .
+
+EXPOSE 8000
+
+CMD ["cargo","watch","-x","run"]
