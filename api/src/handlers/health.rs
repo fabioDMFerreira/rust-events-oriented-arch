@@ -1,7 +1,7 @@
-use crate::core::db;
 use actix_web::{get, web, HttpResponse, Responder};
 use log::error;
 use serde::{Deserialize, Serialize};
+use utils;
 
 #[derive(Serialize, Deserialize)]
 struct HealthResponse {
@@ -18,7 +18,7 @@ const SERVICE_STATUS_OK: &str = "ok";
 const SERVICE_STATUS_ERROR: &str = "error";
 
 #[get("/health")]
-pub async fn get_health(pool: web::Data<db::PgPool>) -> impl Responder {
+pub async fn get_health(pool: web::Data<utils::db::PgPool>) -> impl Responder {
     let db_status = match pool.get() {
         Ok(_) => SERVICE_STATUS_OK,
         Err(err) => {

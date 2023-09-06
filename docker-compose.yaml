@@ -2,12 +2,13 @@ version: '3'
 services:
   api:
     build:
-      context: ./api
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./api/Dockerfile.dev
     ports:
       - 8000:8000
     volumes:
-      - ./api/src:/app/src
+      - ./api/src:/app/api/src
+      - ./utils/src:/app/utils/src
       - ./logs/api:/var/log/app
     environment:
       RUST_LOG: debug
@@ -16,6 +17,8 @@ services:
       JWT_MAX_AGE: 3600
       JWT_SECRET: api-secret-1234
       KAFKA_URL: kafka:29092
+      CORS_ORIGIN: http://localhost:3000
+      PORT: 8000
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,10 +57,11 @@ services:
 
   consumer:
     build:
-      context: ./consumer
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./consumer/Dockerfile.dev
     volumes:
-      - ./consumer/src:/app/src
+      - ./consumer/src:/app/consumer/src
+      - ./utils/src:/app/utils/src
       - ./logs/consumer:/var/log/app
     environment:
       RUST_LOG: debug

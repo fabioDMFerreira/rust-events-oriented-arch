@@ -1,12 +1,10 @@
-# syntax=docker/dockerfile:1
-
 ARG RUST_VERSION=1.72.0
 ARG APP_NAME=consumer
 FROM rust:${RUST_VERSION}-slim-bullseye AS build
 ARG APP_NAME
 WORKDIR /app
 
-# Install some necessary dependencies to run the Kafka client
+# dependencies to compile the Kafka client
 RUN apt-get update && apt-get install -y build-essential \
   curl \
   openssl libssl-dev \
@@ -15,32 +13,32 @@ RUN apt-get update && apt-get install -y build-essential \
   valgrind \
   zlib1g-dev
 
-RUN --mount=type=bind,source=src,target=src \
-  --mount=type=bind,source=Cargo.toml,target=Cargo.toml \
-  --mount=type=bind,source=Cargo.lock,target=Cargo.lock \
-  --mount=type=cache,target=/app/target/ \
-  --mount=type=cache,target=/usr/local/cargo/registry/ \
-  <<EOF
-set -e
-cargo build --locked --release
-cp ./target/release/$APP_NAME /bin/server
-EOF
+# dependencies to compile diesel client
+RUN apt-get install -y  \
+  libpq-dev
 
-FROM debian:bullseye-slim AS final
+RUN cargo install cargo-watch
 
-ARG UID=10001
-RUN adduser \
-  --disabled-password \
-  --gecos "" \
-  --home "/nonexistent" \
-  --shell "/sbin/nologin" \
-  --no-create-home \
-  --uid "${UID}" \
-  appuser
-USER appuser
+RUN echo "[workspace]\n\
+  members = [\n\
+  \"consumer\",\n\
+  \"utils\"\n\
+  ]" > ./Cargo.toml
 
-# Copy the executable from the "build" stage.
-COPY --from=build /bin/server /bin/
+COPY ./consumer/Cargo.toml ./consumer/Cargo.lock ./consumer/
+COPY ./utils/Cargo.toml ./utils/
 
-# What the container should run when it is started.
-CMD ["/bin/server"]
+RUN mkdir consumer/src
+RUN echo "fn main() {}" > ./consumer/src/main.rs
+
+RUN mkdir utils/src
+RUN echo "fn main() {}" > ./utils/src/main.rs
+
+RUN cargo build
+
+COPY ./consumer/src ./consumer/src
+COPY ./utils/src ./utils/src
+
+EXPOSE 8000
+
+CMD ["cargo","watch","-x","run"]

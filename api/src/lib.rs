@@ -1,6 +1,5 @@
 pub mod actors;
 pub mod config;
-pub mod core;
 pub mod error;
 pub mod handlers;
 pub mod middlewares;

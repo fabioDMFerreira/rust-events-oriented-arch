@@ -17,15 +17,27 @@ RUN apt-get update && apt-get install -y build-essential \
 RUN apt-get install -y  \
   libpq-dev
 
-COPY Cargo.toml Cargo.lock  ./
+RUN cargo install cargo-watch
 
-RUN mkdir src
-RUN echo "fn main() {}" > ./src/main.rs
+RUN echo "[workspace]\n\
+  members = [\n\
+  \"api\",\n\
+  \"utils\"\n\
+  ]" > ./Cargo.toml
+
+COPY ./api/Cargo.toml ./api/Cargo.lock ./api/
+COPY ./utils/Cargo.toml ./utils/
+
+RUN mkdir api/src
+RUN echo "fn main() {}" > ./api/src/main.rs
+
+RUN mkdir utils/src
+RUN echo "fn main() {}" > ./utils/src/main.rs
 
 RUN cargo build
 
-RUN cargo install cargo-watch
-COPY . .
+COPY ./api/src ./api/src
+COPY ./utils/src ./utils/src
 
 EXPOSE 8000
 

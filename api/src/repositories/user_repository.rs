@@ -2,10 +2,11 @@ use std::sync::Arc;
 
 use crate::error::{DieselRepositoryError, RepositoryError};
 use crate::models::user::User;
-use crate::{core::db::PgPool, schema::users};
+use crate::schema::users;
 use actix_web::web;
 use async_trait::async_trait;
 use diesel::prelude::*;
+use utils::db::PgPool;
 use uuid::Uuid;
 
 #[async_trait]

@@ -1,9 +1,7 @@
 use async_trait::async_trait;
-use rdkafka::config::ClientConfig;
-use rdkafka::message::{Header, OwnedHeaders};
-use rdkafka::producer::{FutureProducer, FutureRecord};
+use rdkafka::producer::FutureProducer;
 use std::error::Error;
-use std::time::Duration;
+use utils::broker;
 
 use crate::models::user::User;
 
@@ -17,13 +15,7 @@ pub struct KafkaEventService {
 }
 
 impl KafkaEventService {
-    pub fn new(kafka_url: String) -> Self {
-        let producer: FutureProducer = ClientConfig::new()
-            .set("bootstrap.servers", kafka_url)
-            .set("message.timeout.ms", "5000")
-            .create()
-            .expect("Producer creation error");
-
+    pub fn new(producer: FutureProducer) -> Self {
         KafkaEventService { producer: producer }
     }
 }
@@ -33,25 +25,13 @@ impl EventService for KafkaEventService {
     async fn user_created(&self, user: User) -> Result<(), Box<dyn Error>> {
         let json_string = serde_json::to_string(&user).unwrap();
 
-        // The send operation on the topic returns a future, which will be
-        // completed once the result or failure from Kafka is received.
-        let delivery_status = self
-            .producer
-            .send(
-                FutureRecord::to("user_created")
-                    .payload(&format!("{}", json_string))
-                    .key(&format!("user created"))
-                    .headers(OwnedHeaders::new().insert(Header {
-                        key: "header_key",
-                        value: Some("header_value"),
-                    })),
-                Duration::from_secs(120),
-            )
-            .await;
+        let delivery_status = broker::send_message_to_topic(
+            self.producer.clone(),
+            String::from("user_created"),
+            json_string,
+        );
 
-        // This loop will wait until all delivery statuses have been received.
-        println!("Future completed. Result: {:?}", delivery_status);
-        match delivery_status {
+        match delivery_status.await {
             Err((err, _)) => return Err(Box::new(err)),
             Ok(_) => return Ok(()),
         }
