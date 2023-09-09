@@ -8,16 +8,19 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use validator::Validate;
 
 use crate::{
     config::Config, middlewares::jwt_auth::JwtMiddleware, models::token_claims::TokenClaims,
     services::user_service::UserService,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct LoginPayload {
-    name: String,
-    password: String,
+    #[validate(required, length(min = 2))]
+    name: Option<String>,
+    #[validate(required, length(min = 6))]
+    password: Option<String>,
 }
 
 #[get("/auth/logout")]
@@ -37,9 +40,20 @@ pub async fn logout_handler(_: JwtMiddleware) -> impl Responder {
 pub async fn login_handler(
     user_service: web::Data<dyn UserService>,
     config: web::Data<Config>,
-    payload: web::Json<LoginPayload>,
+    payload: Option<web::Json<LoginPayload>>,
 ) -> HttpResponse {
-    let LoginPayload { name, password } = payload.into_inner();
+    if let None = payload {
+        return HttpResponse::BadRequest().body("empty body");
+    }
+
+    let payload = payload.unwrap().into_inner();
+
+    if let Err(e) = payload.validate() {
+        return HttpResponse::BadRequest().json(e);
+    }
+
+    let LoginPayload { name, password } = payload;
+    let name = name.unwrap();
 
     let user = match user_service.get_by_name(name.clone()).await {
         Ok(user) => user,
@@ -52,7 +66,7 @@ pub async fn login_handler(
 
     let parsed_hash = PasswordHash::new(&user.password).unwrap();
     let password_is_valid = Argon2::default()
-        .verify_password(password.as_bytes(), &parsed_hash)
+        .verify_password(password.unwrap().as_bytes(), &parsed_hash)
         .map_or(false, |_| true);
 
     if !password_is_valid {

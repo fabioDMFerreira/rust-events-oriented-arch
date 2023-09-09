@@ -2,18 +2,22 @@ use actix_web::{delete, get, post, put, web, HttpResponse};
 use log::error;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use validator::Validate;
 
 use crate::services::user_service::UserService;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 struct CreateUserPayload {
-    name: String,
-    password: String,
+    #[validate(required, length(min = 2))]
+    name: Option<String>,
+    #[validate(required, length(min = 6))]
+    password: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 struct UpdateUserPayload {
-    name: String,
+    #[validate(required, length(min = 2))]
+    name: Option<String>,
 }
 
 #[get("/users")]
@@ -48,11 +52,20 @@ async fn get_user_by_id(
 #[post("/users")]
 async fn create_user(
     user_service: web::Data<dyn UserService>,
-    payload: web::Json<CreateUserPayload>,
+    payload: Option<web::Json<CreateUserPayload>>,
 ) -> HttpResponse {
+    if let None = payload {
+        HttpResponse::BadRequest().body("empty body");
+    }
+
+    let payload = payload.unwrap();
+    if let Err(err) = payload.validate() {
+        return HttpResponse::BadRequest().json(err);
+    }
+
     let CreateUserPayload { name, password } = payload.into_inner();
 
-    match user_service.create(name, password).await {
+    match user_service.create(name.unwrap(), password.unwrap()).await {
         Err(err) => {
             error!("failed creating user: {}", err);
             return HttpResponse::InternalServerError().finish();
@@ -64,12 +77,21 @@ async fn create_user(
 #[put("/users/{id}")]
 async fn update_user(
     user_service: web::Data<dyn UserService>,
-    payload: web::Json<UpdateUserPayload>,
+    payload: Option<web::Json<UpdateUserPayload>>,
     id: web::Path<Uuid>,
 ) -> HttpResponse {
+    if let None = payload {
+        return HttpResponse::BadRequest().body("empty body");
+    }
+
+    let payload = payload.unwrap();
+    if let Err(err) = payload.validate() {
+        return HttpResponse::BadRequest().json(err);
+    }
+
     let name = payload.into_inner().name;
 
-    match user_service.update(id.into_inner(), name).await {
+    match user_service.update(id.into_inner(), name.unwrap()).await {
         Err(err) => {
             error!("failed updating user: {}", err);
             return HttpResponse::InternalServerError().finish();

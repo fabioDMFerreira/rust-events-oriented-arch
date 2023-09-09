@@ -6,23 +6,35 @@ use actix_web::{
     HttpResponse,
 };
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 struct MessagePayload {
-    message: String,
-    user_id: String,
+    #[validate(required, length(min = 1))]
+    message: Option<String>,
+    #[validate(required, length(min = 1))]
+    user_id: Option<String>,
 }
 
 #[post("/messages")]
 async fn create_message(
     ws_server: Data<Addr<WebsocketServer>>,
-    payload: Json<MessagePayload>,
+    payload: Option<Json<MessagePayload>>,
 ) -> HttpResponse {
-    let MessagePayload { message, user_id } = payload.into_inner();
+    if let None = payload {
+        return HttpResponse::BadRequest().body("empty body");
+    }
+
+    let payload = payload.unwrap().into_inner();
+    if let Err(err) = payload.validate() {
+        return HttpResponse::BadRequest().json(err);
+    }
+
+    let MessagePayload { message, user_id } = payload;
 
     ws_server.do_send(SessionMessage {
-        id: user_id,
-        message: message,
+        id: user_id.unwrap(),
+        message: message.unwrap(),
     });
 
     HttpResponse::Ok().finish()

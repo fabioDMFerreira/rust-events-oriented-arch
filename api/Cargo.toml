@@ -27,3 +27,4 @@ rand = "0.8.5"
 jsonwebtoken = "8.3.0"
 argon2 = "0.5.2"
 utils={ path = "../utils" }
+validator = { version = "0.15", features = ["derive"] }
