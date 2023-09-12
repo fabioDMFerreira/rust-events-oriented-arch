@@ -1,9 +1,7 @@
 use actix_web::{get, HttpResponse, Responder};
-use log::debug;
 
 #[get("/")]
 pub async fn get_index() -> impl Responder {
-    debug!("got index");
     HttpResponse::Ok().body("v0.1.0")
 }
 

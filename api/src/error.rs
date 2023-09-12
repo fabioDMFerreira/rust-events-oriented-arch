@@ -2,7 +2,7 @@ use actix_web::error::BlockingError;
 use diesel::r2d2;
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct CommonError {
     pub message: String,
     pub code: u32,

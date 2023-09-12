@@ -2,6 +2,7 @@ use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
 use argon2::Argon2;
 use async_trait::async_trait;
 use log::error;
+use mockall::automock;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -11,6 +12,7 @@ use crate::repositories::user_repository::UserRepository;
 
 use super::event_service::EventService;
 
+#[automock]
 #[async_trait]
 pub trait UserService: Send + Sync {
     async fn create(&self, name: String, password: String) -> Result<User, CommonError>;
