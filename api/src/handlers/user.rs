@@ -117,7 +117,6 @@ async fn delete_user(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::dev::ServiceResponse;
     use actix_web::http::StatusCode;
     use actix_web::{test, web, App};
     use mockall::predicate::eq;

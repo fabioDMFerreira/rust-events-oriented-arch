@@ -1,13 +1,14 @@
 use async_trait::async_trait;
+use mockall::automock;
 use rdkafka::producer::FutureProducer;
-use std::error::Error;
 use utils::broker;
 
-use crate::models::user::User;
+use crate::{error::BrokerError, models::user::User};
 
+#[automock]
 #[async_trait]
 pub trait EventService: Send + Sync {
-    async fn user_created(&self, user: User) -> Result<(), Box<dyn Error>>;
+    async fn user_created(&self, user: User) -> Result<(), BrokerError>;
 }
 
 pub struct KafkaEventService {
@@ -22,7 +23,7 @@ impl KafkaEventService {
 
 #[async_trait]
 impl EventService for KafkaEventService {
-    async fn user_created(&self, user: User) -> Result<(), Box<dyn Error>> {
+    async fn user_created(&self, user: User) -> Result<(), BrokerError> {
         let json_string = serde_json::to_string(&user).unwrap();
 
         let delivery_status = broker::send_message_to_topic(
@@ -32,7 +33,11 @@ impl EventService for KafkaEventService {
         );
 
         match delivery_status.await {
-            Err((err, _)) => return Err(Box::new(err)),
+            Err((err, _)) => {
+                return Err(BrokerError {
+                    message: err.to_string(),
+                })
+            }
             Ok(_) => return Ok(()),
         }
     }

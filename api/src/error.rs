@@ -2,7 +2,7 @@ use actix_web::error::BlockingError;
 use diesel::r2d2;
 use serde::Serialize;
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, PartialEq)]
 pub struct CommonError {
     pub message: String,
     pub code: u32,
@@ -14,7 +14,7 @@ impl std::fmt::Display for CommonError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RepositoryError {
     pub message: String,
 }
@@ -24,6 +24,20 @@ impl Into<CommonError> for RepositoryError {
         CommonError {
             message: self.message,
             code: 1,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct BrokerError {
+    pub message: String,
+}
+
+impl Into<CommonError> for BrokerError {
+    fn into(self) -> CommonError {
+        CommonError {
+            message: self.message,
+            code: 2,
         }
     }
 }

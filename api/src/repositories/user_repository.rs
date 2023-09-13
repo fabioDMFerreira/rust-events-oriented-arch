@@ -6,9 +6,11 @@ use crate::schema::users;
 use actix_web::web;
 use async_trait::async_trait;
 use diesel::prelude::*;
+use mockall::automock;
 use utils::db::PgPool;
 use uuid::Uuid;
 
+#[automock]
 #[async_trait]
 pub trait UserRepository: Send + Sync {
     async fn create(&self, name: String, password: String) -> Result<User, RepositoryError>;
