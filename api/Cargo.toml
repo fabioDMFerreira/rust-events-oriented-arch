@@ -26,7 +26,7 @@ chrono = "0.4.28"
 rand = "0.8.5"
 jsonwebtoken = "8.3.0"
 argon2 = "0.5.2"
-utils={ path = "../utils" }
+utils={ path = "../utils", features = ["broker","database"] }
 validator = { version = "0.15", features = ["derive"] }
 futures = "0.3.28"
 mockall = "0.11.4"
