@@ -37,6 +37,8 @@ RUN echo "fn main() {}" > ./utils/src/main.rs
 RUN cargo build
 
 COPY ./api/src ./api/src
+COPY ./api/tests ./api/tests
+
 COPY ./utils/src ./utils/src
 
 EXPOSE 8000

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::error::{DieselRepositoryError, RepositoryError};
 use crate::models::user::User;
 use crate::schema::users;
-use actix_web::web;
+use actix_threadpool::run;
 use async_trait::async_trait;
 use diesel::prelude::*;
 use mockall::automock;
@@ -42,13 +42,12 @@ impl UserRepository for UserDieselRepository {
 
         let pool = self.pool.clone();
 
-        let inserted_user = web::block(move || {
+        let inserted_user = run(move || {
             let mut conn = pool.get().unwrap();
 
             diesel::insert_into(users::table)
                 .values(new_user)
                 .get_result(&mut conn)
-                .unwrap()
         })
         .await
         .map_err(|v| DieselRepositoryError::from(v).into_inner())?;
@@ -59,10 +58,10 @@ impl UserRepository for UserDieselRepository {
     async fn list(&self) -> Result<Vec<User>, RepositoryError> {
         let pool = self.pool.clone();
 
-        let users = web::block(move || {
+        let users = run(move || {
             let mut conn = pool.get().unwrap();
 
-            users::table.load::<User>(&mut conn).unwrap()
+            users::table.load::<User>(&mut conn)
         })
         .await
         .map_err(|v| DieselRepositoryError::from(v).into_inner())?;
@@ -73,13 +72,10 @@ impl UserRepository for UserDieselRepository {
     async fn get_by_id(&self, user_id: Uuid) -> Result<User, RepositoryError> {
         let pool = self.pool.clone();
 
-        let user = web::block(move || {
+        let user = run(move || {
             let mut conn = pool.get().unwrap();
 
-            users::table
-                .filter(users::id.eq(user_id))
-                .first(&mut conn)
-                .unwrap()
+            users::table.filter(users::id.eq(user_id)).first(&mut conn)
         })
         .await
         .map_err(|v| DieselRepositoryError::from(v).into_inner())?;
@@ -90,13 +86,10 @@ impl UserRepository for UserDieselRepository {
     async fn get_by_name(&self, name: String) -> Result<User, RepositoryError> {
         let pool = self.pool.clone();
 
-        let user = web::block(move || {
+        let user = run(move || {
             let mut conn = pool.get().unwrap();
 
-            users::table
-                .filter(users::name.eq(name))
-                .first(&mut conn)
-                .unwrap()
+            users::table.filter(users::name.eq(name)).first(&mut conn)
         })
         .await
         .map_err(|v| DieselRepositoryError::from(v).into_inner())?;
@@ -107,13 +100,12 @@ impl UserRepository for UserDieselRepository {
     async fn update(&self, user_id: Uuid, name: String) -> Result<User, RepositoryError> {
         let pool = self.pool.clone();
 
-        let user = web::block(move || {
+        let user = run(move || {
             let mut conn = pool.get().unwrap();
 
             diesel::update(users::table.find(user_id))
                 .set(users::name.eq(name))
                 .get_result(&mut conn)
-                .unwrap()
         })
         .await
         .map_err(|v| DieselRepositoryError::from(v).into_inner())?;
@@ -124,12 +116,10 @@ impl UserRepository for UserDieselRepository {
     async fn delete(&self, user_id: Uuid) -> Result<usize, RepositoryError> {
         let pool = self.pool.clone();
 
-        let user_id = web::block(move || {
+        let user_id = run(move || {
             let mut conn = pool.get().unwrap();
 
-            diesel::delete(users::table.find(user_id))
-                .execute(&mut conn)
-                .unwrap()
+            diesel::delete(users::table.find(user_id)).execute(&mut conn)
         })
         .await
         .map_err(|v| DieselRepositoryError::from(v).into_inner())?;

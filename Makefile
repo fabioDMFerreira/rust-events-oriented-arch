@@ -11,3 +11,6 @@ cover:
 	grcov . -s . --binary-path ./target/debug/ -t lcov --branch --ignore-not-existing -o ./coverage/lcov.info
 	grcov . -s . --binary-path ./target/debug/ -t html --branch --ignore-not-existing -o ./coverage
 	rm default_*
+
+test:
+	docker-compose -f docker-compose.tests.yaml up --build

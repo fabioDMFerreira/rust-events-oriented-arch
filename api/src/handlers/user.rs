@@ -7,17 +7,17 @@ use validator::Validate;
 use crate::services::user_service::UserService;
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
-struct CreateUserPayload {
+pub struct CreateUserPayload {
     #[validate(required, length(min = 2))]
-    name: Option<String>,
+    pub name: Option<String>,
     #[validate(required, length(min = 6))]
-    password: Option<String>,
+    pub password: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
-struct UpdateUserPayload {
+pub struct UpdateUserPayload {
     #[validate(required, length(min = 2))]
-    name: Option<String>,
+    pub name: Option<String>,
 }
 
 #[get("/users")]

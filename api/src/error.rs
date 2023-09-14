@@ -1,4 +1,4 @@
-use actix_web::error::BlockingError;
+pub use actix_threadpool::BlockingError;
 use diesel::r2d2;
 use serde::Serialize;
 
@@ -67,8 +67,8 @@ impl From<diesel::result::Error> for DieselRepositoryError {
     }
 }
 
-impl From<BlockingError> for DieselRepositoryError {
-    fn from(error: BlockingError) -> DieselRepositoryError {
+impl<T: std::fmt::Debug> From<BlockingError<T>> for DieselRepositoryError {
+    fn from(error: BlockingError<T>) -> DieselRepositoryError {
         DieselRepositoryError(RepositoryError {
             message: error.to_string(),
         })
