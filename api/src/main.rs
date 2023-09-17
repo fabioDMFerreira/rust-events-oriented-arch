@@ -9,9 +9,9 @@ use api::config::Config;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // infra
-    init_logger();
     let config = Config::init();
+
+    init_logger(config.logs_path.clone());
 
     let server_port = config.server_port.clone();
 

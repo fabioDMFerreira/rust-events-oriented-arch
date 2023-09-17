@@ -10,11 +10,12 @@ use rdkafka::message::{BorrowedMessage, Message};
 
 #[tokio::main]
 async fn main() {
-    init_logger();
-
     let kafka_url = env::var("KAFKA_URL").unwrap_or_else(|_| {
         panic!("KAFKA_URL environment variable is not set");
     });
+    let logs_path = env::var("LOGS_PATH").unwrap_or_else(|_| String::from(""));
+
+    init_logger(logs_path);
 
     let topic = "user_created";
 

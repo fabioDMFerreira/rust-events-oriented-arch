@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrations
+spec:
+  template:
+    metadata:
+      name: migrations
+    spec:
+      containers:
+        - name: migrations-container
+          image: ffff/rust-migrations-prod
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DATABASE_URL
+              value: 'postgres://myuser:mypassword@postgres-service:5432/mydb'
+      restartPolicy: Never

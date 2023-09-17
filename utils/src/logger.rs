@@ -4,11 +4,17 @@ use std::io::Write;
 use chrono::Local;
 use env_logger::Env;
 
-pub fn init_logger() {
-    let target = Box::new(File::create("/var/log/app/stdout.log").expect("Can't create file"));
+pub fn init_logger(logs_path: String) {
+    let mut target = env_logger::Target::Stdout;
+
+    if !logs_path.is_empty() {
+        let file = Box::new(File::create("/var/log/app/stdout.log").expect("Can't create file"));
+
+        target = env_logger::Target::Pipe(file);
+    }
 
     env_logger::Builder::from_env(Env::default().default_filter_or("info"))
-        .target(env_logger::Target::Pipe(target))
+        .target(target)
         .format(|buf, record| {
             writeln!(
                 buf,

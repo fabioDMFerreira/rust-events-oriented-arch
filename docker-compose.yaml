@@ -11,14 +11,15 @@ services:
       - ./utils/src:/app/utils/src
       - ./logs/api:/var/log/app
     environment:
-      RUST_LOG: debug
+      CORS_ORIGIN: http://localhost:3000
       DATABASE_URL: "postgres://myuser:mypassword@postgres:5432/mydb"
       JWT_EXPIRED_IN: 60
       JWT_MAX_AGE: 3600
       JWT_SECRET: api-secret-1234
       KAFKA_URL: kafka:29092
-      CORS_ORIGIN: http://localhost:3000
+      LOGS_PATH: /var/log/app/stdout.log
       PORT: 8000
+      RUST_LOG: debug
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,8 +65,9 @@ services:
       - ./utils/src:/app/utils/src
       - ./logs/consumer:/var/log/app
     environment:
-      RUST_LOG: debug
       KAFKA_URL: kafka:29092
+      LOGS_PATH: /var/log/app/stdout.log
+      RUST_LOG: debug
     depends_on:
       kafka:
         condition: service_healthy

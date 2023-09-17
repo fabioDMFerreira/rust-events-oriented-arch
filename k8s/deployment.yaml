@@ -1,0 +1,134 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - host: rust-xp.com
+      http:
+        paths:
+          - path: /()(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: fe-service
+                port:
+                  number: 80
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 8000
+  ingressClassName: nginx
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+spec:
+  selector:
+    app: api
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api-container
+          image: ffff/rust-api-prod
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: CORS_ORIGIN
+              value: 'http://localhost:3000'
+            - name: DATABASE_URL
+              value: 'postgres://myuser:mypassword@postgres-service:5432/mydb'
+            - name: JWT_EXPIRED_IN
+              value: '60'
+            - name: JWT_MAX_AGE
+              value: '3600'
+            - name: JWT_SECRET
+              value: 'api-secret-1234'
+            - name: KAFKA_URL
+              value: 'kafka-service:9092'
+            - name: PORT
+              value: '8000'
+            - name: RUST_LOG
+              value: 'debug'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fe-service
+spec:
+  selector:
+    app: fe
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fe-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fe
+  template:
+    metadata:
+      labels:
+        app: fe
+    spec:
+      containers:
+        - name: fe-container
+          image: ffff/rust-fe-prod
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      containers:
+        - name: consumer-container
+          image: ffff/rust-consumer-prod
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KAFKA_URL
+              value: 'kafka-service:9092'
+            - name: RUST_LOG
+              value: 'debug'

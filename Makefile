@@ -14,3 +14,18 @@ cover:
 
 test:
 	docker-compose -f docker-compose.tests.yaml up --build
+
+
+build-prod:
+	docker build -t ffff/rust-api-prod -f ./docker.prod/Dockerfile.api  .
+	docker build -t ffff/rust-fe-prod -f ./docker.prod/Dockerfile.fe  .
+	docker build -t ffff/rust-migrations-prod -f ./docker.prod/Dockerfile.migrations  .
+	docker build -t ffff/rust-consumer-prod -f ./docker.prod/Dockerfile.consumer  .
+
+deploy-k8s:
+	helm upgrade --install ingress-nginx ./k8s/ingress-nginx --namespace ingress-nginx --create-namespace
+	kubectl apply -f ./k8s/postgres.yaml
+	kubectl apply -f ./k8s/kafka.yaml
+	kubectl apply -f ./k8s/migrations.yaml
+	kubectl apply -f ./k8s/deployment.yaml
+

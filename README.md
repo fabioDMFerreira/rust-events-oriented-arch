@@ -20,6 +20,8 @@ Basic application to learn Rust and events oriented architecture.
 
 8. **React application**: Develop a React front-end application to provide an interactive and dynamic user interface for your Actix backend.
 
+9. **Containerization**: Setup to run all services locally in Docker containers and manifests to deploy to Kubernetes cluster.
+
 ## Directory Structure
 
 - `api`: Contains the backend code for the project, including the API endpoints and database migrations.
