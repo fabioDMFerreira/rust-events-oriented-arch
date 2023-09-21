@@ -5,3 +5,4 @@ pub mod db;
 
 pub mod http_server;
 pub mod logger;
+pub mod serializer;

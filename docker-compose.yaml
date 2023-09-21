@@ -1,44 +1,5 @@
 version: '3'
 services:
-  api:
-    build:
-      context: .
-      dockerfile: ./api/Dockerfile.dev
-    ports:
-      - 8000:8000
-    volumes:
-      - ./api/src:/app/api/src
-      - ./utils/src:/app/utils/src
-      - ./logs/api:/var/log/app
-    environment:
-      CORS_ORIGIN: http://localhost:3000
-      DATABASE_URL: "postgres://myuser:mypassword@postgres:5432/mydb"
-      JWT_EXPIRED_IN: 60
-      JWT_MAX_AGE: 3600
-      JWT_SECRET: api-secret-1234
-      KAFKA_URL: kafka:29092
-      LOGS_PATH: /var/log/app/stdout.log
-      PORT: 8000
-      RUST_LOG: debug
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      api-migrations:
-        condition: service_completed_successfully
-
-  api-migrations:
-    build:
-      context: ./api
-      dockerfile: Dockerfile.migrations
-    environment:
-      RUST_LOG: info
-      DATABASE_URL: "postgres://myuser:mypassword@postgres:5432/mydb"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   postgres:
     image: postgres
     restart: always
@@ -50,27 +11,12 @@ services:
       POSTGRES_DB: mydb
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+      - ./db-init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 10
-
-  consumer:
-    build:
-      context: .
-      dockerfile: ./consumer/Dockerfile.dev
-    volumes:
-      - ./consumer/src:/app/consumer/src
-      - ./utils/src:/app/utils/src
-      - ./logs/consumer:/var/log/app
-    environment:
-      KAFKA_URL: kafka:29092
-      LOGS_PATH: /var/log/app/stdout.log
-      RUST_LOG: debug
-    depends_on:
-      kafka:
-        condition: service_healthy
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
@@ -108,6 +54,92 @@ services:
       retries: 10
     volumes:
       - ./data/kafka:/var/lib/kafka/data
+
+  api:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile.dev
+    ports:
+      - 8000:8000
+    volumes:
+      - ./api/src:/app/api/src
+      - ./utils/src:/app/utils/src
+      - ./logs/api:/var/log/app
+    environment:
+      CORS_ORIGIN: http://localhost:3000
+      DATABASE_URL: "postgres://myuser:mypassword@postgres:5432/mydb?searchpath%3Dusers"
+      JWT_EXPIRED_IN: 60
+      JWT_MAX_AGE: 3600
+      JWT_SECRET: api-secret-1234
+      KAFKA_URL: kafka:29092
+      LOGS_PATH: /var/log/app/stdout.log
+      PORT: 8000
+      RUST_LOG: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      api-migrations:
+        condition: service_completed_successfully
+
+  api-migrations:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.migrations
+    environment:
+      RUST_LOG: info
+      DATABASE_URL: "postgres://myuser:mypassword@postgres:5432/mydb?options=-c%20search_path%3Dusers"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  news:
+    build:
+      context: .
+      dockerfile: ./news/Dockerfile.dev
+    volumes:
+      - ./news/src:/app/news/src
+      - ./utils/src:/app/utils/src
+      - ./logs/news:/var/log/app
+    environment:
+      DATABASE_URL: "postgres://myuser:mypassword@postgres:5432/mydb?options=-c%20search_path%3Dnews"
+      LOGS_PATH: /var/log/app/stdout.log
+      RUST_LOG: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      news-migrations:
+        condition: service_completed_successfully
+
+  news-migrations:
+    build:
+      context: ./news
+      dockerfile: Dockerfile.migrations
+    environment:
+      RUST_LOG: info
+      DATABASE_URL: "postgres://myuser:mypassword@postgres:5432/mydb?options=-c%20search_path%3Dnews"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  consumer:
+    build:
+      context: .
+      dockerfile: ./consumer/Dockerfile.dev
+    volumes:
+      - ./consumer/src:/app/consumer/src
+      - ./utils/src:/app/utils/src
+      - ./logs/consumer:/var/log/app
+    environment:
+      KAFKA_URL: kafka:29092
+      LOGS_PATH: /var/log/app/stdout.log
+      RUST_LOG: debug
+    depends_on:
+      kafka:
+        condition: service_healthy
 
   frontend:
     container_name: frontend

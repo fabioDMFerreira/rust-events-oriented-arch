@@ -12,7 +12,6 @@ tokio-postgres = "0.7.6"
 tokio = { version = "1.24.2", features = ["full"] }
 actix-web-actors = "4.2.0"
 actix = "0.13.1"
-env_logger = "0.10.0"
 log = "0.4.20"
 diesel = { version = "2.1.1", features = ["postgres","r2d2","uuid"] }
 diesel_migrations = "2.1.0"
@@ -27,7 +26,7 @@ rand = "0.8.5"
 jsonwebtoken = "8.3.0"
 argon2 = "0.5.2"
 utils={ path = "../utils", features = ["broker","database"] }
-validator = { version = "0.15", features = ["derive"] }
+validator = { version = "0.16.1", features = ["derive"] }
 futures = "0.3.28"
 mockall = "0.11.4"
 rstest = "0.18.2"
