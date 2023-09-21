@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use api::{
+use diesel::connection::SimpleConnection;
+use users::{
     config::Config,
     repositories::user_repository::{UserDieselRepository, UserRepository},
 };
-use diesel::connection::SimpleConnection;
 use utils::db;
 use uuid::Uuid;
 

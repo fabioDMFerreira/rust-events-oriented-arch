@@ -35,7 +35,7 @@ module.exports = function (app) {
     .use(
       '/api/auth',
       createProxyMiddleware({
-        target: 'http://api:8000',
+        target: 'http://users:8000',
         changeOrigin: true,
         pathRewrite: {
           '^/api/': '/',
@@ -45,7 +45,7 @@ module.exports = function (app) {
     .use(
       '/ws',
       createProxyMiddleware({
-        target: 'ws://api:8000',
+        target: 'ws://users:8000',
         changeOrigin: true,
       })
     );

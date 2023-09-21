@@ -55,22 +55,22 @@ services:
     volumes:
       - ./data/kafka:/var/lib/kafka/data
 
-  api:
+  users:
     build:
       context: .
-      dockerfile: ./api/Dockerfile.dev
+      dockerfile: ./users/Dockerfile.dev
     ports:
       - 8000:8000
     volumes:
-      - ./api/src:/app/api/src
+      - ./users/src:/app/users/src
       - ./utils/src:/app/utils/src
-      - ./logs/api:/var/log/app
+      - ./logs/users:/var/log/app
     environment:
       CORS_ORIGIN: http://localhost:3000
       DATABASE_URL: "postgres://myuser:mypassword@postgres:5432/mydb?options=-c%20search_path%3Dusers"
       JWT_EXPIRED_IN: 60
       JWT_MAX_AGE: 3600
-      JWT_SECRET: api-secret-1234
+      JWT_SECRET: users-secret-1234
       KAFKA_URL: kafka:29092
       LOGS_PATH: /var/log/app/stdout.log
       PORT: 8000
@@ -80,12 +80,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      api-migrations:
+      users-migrations:
         condition: service_completed_successfully
 
-  api-migrations:
+  users-migrations:
     build:
-      context: ./api
+      context: ./users
       dockerfile: Dockerfile.migrations
     environment:
       RUST_LOG: info
@@ -156,5 +156,5 @@ services:
     ports:
       - 3000:3000
     depends_on:
-      - api
+      - users
       - news

@@ -6,6 +6,7 @@ metadata:
 spec:
   selector:
     app: postgres
+  type: LoadBalancer
   ports:
     - name: postgres
       port: 5432
@@ -37,5 +38,13 @@ spec:
               value: 'mypassword'
             - name: POSTGRES_DB
               value: 'mydb'
+          volumeMounts:
+            - name: init-scripts-volume
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: init-scripts-volume
+          hostPath:
+            path: /Users/fabioferreira/Projects/rust-noob/db-init-scripts
+            type: Directory
 ---
 

@@ -4,12 +4,47 @@ metadata:
   name: api-ingress
   annotations:
     nginx.ingress.kubernetes.io/use-regex: 'true'
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/rewrite-target: /$1$2
 spec:
   rules:
     - host: rust-xp.com
       http:
         paths:
+          - path: /api/(feeds)(/|.*)?
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: news-service
+                port:
+                  number: 8001
+          - path: /api/(news)(/|.*)?
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: news-service
+                port:
+                  number: 8001
+          - path: /api/(users)(/|.*)?
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: users-service
+                port:
+                  number: 8000
+          - path: /api/(auth)(/.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: users-service
+                port:
+                  number: 8000
+          - path: /()(ws)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: users-service
+                port:
+                  number: 8000
           - path: /()(.*)
             pathType: ImplementationSpecific
             backend:
@@ -17,22 +52,15 @@ spec:
                 name: fe-service
                 port:
                   number: 80
-          - path: /api(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 8000
   ingressClassName: nginx
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: api-service
+  name: users-service
 spec:
   selector:
-    app: api
+    app: users
   ports:
     - protocol: TCP
       port: 8000
@@ -41,28 +69,28 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-deployment
+  name: users-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api
+      app: users
   template:
     metadata:
       labels:
-        app: api
+        app: users
     spec:
       containers:
-        - name: api-container
-          image: ffff/rust-api-prod
+        - name: users-container
+          image: ffff/rust-users-prod
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           env:
             - name: CORS_ORIGIN
-              value: 'http://localhost:3000'
+              value: 'http://rust-xp.com'
             - name: DATABASE_URL
-              value: 'postgres://myuser:mypassword@postgres-service:5432/mydb'
+              value: 'postgres://myuser:mypassword@postgres-service:5432/mydb?options=-c%20search_path%3Dusers'
             - name: JWT_EXPIRED_IN
               value: '60'
             - name: JWT_MAX_AGE
@@ -73,6 +101,52 @@ spec:
               value: 'kafka-service:9092'
             - name: PORT
               value: '8000'
+            - name: RUST_LOG
+              value: 'debug'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: news-service
+spec:
+  selector:
+    app: news
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: news-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: news
+  template:
+    metadata:
+      labels:
+        app: news
+    spec:
+      containers:
+        - name: news-container
+          image: ffff/rust-news-prod
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8001
+          env:
+            - name: CORS_ORIGIN
+              value: 'http://rust-xp.com'
+            - name: DATABASE_URL
+              value: 'postgres://myuser:mypassword@postgres-service:5432/mydb?options=-c%20search_path%3Dnews'
+            - name: JWT_SECRET
+              value: 'api-secret-1234'
+            - name: KAFKA_URL
+              value: 'kafka-service:9092'
+            - name: PORT
+              value: '8001'
             - name: RUST_LOG
               value: 'debug'
 ---

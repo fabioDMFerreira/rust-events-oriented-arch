@@ -116,7 +116,9 @@ impl Scrapper {
     }
 
     async fn scrap(rss_feed: &RssFeed) -> Result<Feed, String> {
-        let xml = http_request(rss_feed.url.clone()).await.unwrap();
+        let xml = http_request(rss_feed.url.clone())
+            .await
+            .expect("Failed to send request");
 
         let feed = parser::parse(xml.reader()).unwrap();
 

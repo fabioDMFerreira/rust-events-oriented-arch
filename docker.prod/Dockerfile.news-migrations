@@ -1,5 +1,5 @@
 ARG RUST_VERSION=1.72.0
-ARG APP_NAME=api
+ARG APP_NAME=news
 FROM rust:${RUST_VERSION}-slim-bullseye AS build
 ARG APP_NAME
 WORKDIR /app
@@ -9,6 +9,6 @@ RUN apt-get update && apt-get install -y  \
 
 RUN cargo install  diesel_cli --no-default-features --features postgres
 
-COPY ./api/migrations /app/migrations
+COPY ./news/migrations /app/migrations
 
 CMD ["diesel","migration","run"]

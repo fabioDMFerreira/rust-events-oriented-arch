@@ -1,17 +1,35 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: migrations
+  name: users-migrations
 spec:
   template:
     metadata:
-      name: migrations
+      name: users-migrations
     spec:
       containers:
-        - name: migrations-container
-          image: ffff/rust-migrations-prod
+        - name: users-migrations-container
+          image: ffff/rust-users-migrations-prod
           imagePullPolicy: IfNotPresent
           env:
             - name: DATABASE_URL
-              value: 'postgres://myuser:mypassword@postgres-service:5432/mydb'
+              value: 'postgres://myuser:mypassword@postgres-service:5432/mydb?options=-c%20search_path%3Dusers'
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: news-migrations
+spec:
+  template:
+    metadata:
+      name: news-migrations
+    spec:
+      containers:
+        - name: news-migrations-container
+          image: ffff/rust-news-migrations-prod
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DATABASE_URL
+              value: 'postgres://myuser:mypassword@postgres-service:5432/mydb?options=-c%20search_path%3Dnews'
       restartPolicy: Never

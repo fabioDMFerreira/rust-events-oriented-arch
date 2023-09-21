@@ -2,10 +2,10 @@
 extern crate log;
 
 use actix_web::HttpServer;
-use api::app;
+use users::app;
+use users::config::Config;
 use utils::logger::init_logger;
 
-use api::config::Config;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

@@ -1,10 +1,10 @@
 use actix_web::http::StatusCode;
 use actix_web::test;
-use api::app::setup_app;
-use api::config::Config;
-use api::handlers::user::CreateUserPayload;
 use serde::Deserialize;
 use serde_json::from_slice;
+use users::app::setup_app;
+use users::config::Config;
+use users::handlers::user::CreateUserPayload;
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 struct UserResponse {

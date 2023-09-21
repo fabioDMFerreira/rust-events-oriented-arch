@@ -1,0 +1,54 @@
+ARG RUST_VERSION=1.72.0
+ARG APP_NAME=users
+FROM rust:${RUST_VERSION}-slim-bullseye AS build
+ARG APP_NAME
+WORKDIR /app
+
+# dependencies to compile the Kafka client
+RUN apt-get update && apt-get install -y build-essential \
+  curl \
+  openssl libssl-dev \
+  pkg-config \
+  python \
+  valgrind \
+  zlib1g-dev
+
+# dependencies to compile diesel client
+RUN apt-get install -y  \
+  libpq-dev
+
+RUN echo "[workspace]\n\
+  members = [\n\
+  \"users\",\n\
+  \"utils\"\n\
+  ]" > ./Cargo.toml
+
+COPY ./users/Cargo.toml ./users/Cargo.lock ./users/
+COPY ./utils/Cargo.toml ./utils/
+
+RUN mkdir users/src
+RUN echo "fn main() {}" > ./users/src/main.rs
+
+RUN mkdir utils/src
+RUN echo "fn main() {}" > ./utils/src/main.rs
+
+RUN cargo build --release
+
+COPY ./utils/src ./utils/src
+COPY ./users/src ./users/src
+
+RUN cargo build --release
+
+RUN cp ./target/release/$APP_NAME /bin/server
+
+
+FROM debian:bullseye-slim AS final
+
+RUN apt-get update && apt-get install -y  \
+  libpq-dev
+
+COPY --from=build /bin/server /bin/
+
+EXPOSE 8000
+
+CMD ["/bin/server"]

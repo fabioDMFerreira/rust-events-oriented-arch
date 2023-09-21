@@ -1,5 +1,5 @@
 ARG RUST_VERSION=1.72.0
-ARG APP_NAME=api
+ARG APP_NAME=news
 FROM rust:${RUST_VERSION}-slim-bullseye AS build
 ARG APP_NAME
 WORKDIR /app
@@ -19,15 +19,15 @@ RUN apt-get install -y  \
 
 RUN echo "[workspace]\n\
   members = [\n\
-  \"api\",\n\
+  \"news\",\n\
   \"utils\"\n\
   ]" > ./Cargo.toml
 
-COPY ./api/Cargo.toml ./api/Cargo.lock ./api/
+COPY ./news/Cargo.toml ./news/
 COPY ./utils/Cargo.toml ./utils/
 
-RUN mkdir api/src
-RUN echo "fn main() {}" > ./api/src/main.rs
+RUN mkdir news/src
+RUN echo "fn main() {}" > ./news/src/main.rs
 
 RUN mkdir utils/src
 RUN echo "fn main() {}" > ./utils/src/main.rs
@@ -35,7 +35,7 @@ RUN echo "fn main() {}" > ./utils/src/main.rs
 RUN cargo build --release
 
 COPY ./utils/src ./utils/src
-COPY ./api/src ./api/src
+COPY ./news/src ./news/src
 
 RUN cargo build --release
 
@@ -45,10 +45,12 @@ RUN cp ./target/release/$APP_NAME /bin/server
 FROM debian:bullseye-slim AS final
 
 RUN apt-get update && apt-get install -y  \
-  libpq-dev
+  libpq-dev \
+  openssl libssl-dev \
+  ca-certificates
 
 COPY --from=build /bin/server /bin/
 
-EXPOSE 8000
+EXPOSE 8001
 
 CMD ["/bin/server"]
