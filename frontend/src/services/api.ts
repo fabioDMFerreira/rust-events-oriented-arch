@@ -47,14 +47,36 @@ class API {
     }
   }
 
+  _saveToken(token: string) {
+    this.token = token;
+    window.localStorage.setItem('authToken', token);
+  }
+
   login(name: string, password: string): Promise<LoginResponse> {
     return this._doRequest('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ name, password }),
-    }).then((resp: any) => {
-      window.localStorage.setItem('authToken', resp.token);
-      return resp;
-    }) as any;
+    })
+      .then((resp: any) => {
+        this._saveToken(resp.token);
+        return resp;
+      })
+      .catch((err) => {
+        console.log('caught error', err);
+        const errorParsed = JSON.parse(err.message);
+
+        if (errorParsed.message) {
+          throw new Error(errorParsed.message);
+        }
+        console.log({ errorParsed });
+        throw new Error('invalid username or password');
+      }) as any;
+  }
+
+  logout(): Promise<any> {
+    return this._doRequest('/auth/logout').then(() => {
+      this._saveToken('');
+    });
   }
 
   me(): Promise<UserResponse> {
@@ -96,8 +118,6 @@ class API {
 
 const api = new API();
 
-// api.login = api.login.bind(api);
-// api.me = api.me.bind(api);
-// api.connectWs = api.connectWs.bind(api);
+api._init();
 
 export default api;

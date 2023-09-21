@@ -4,11 +4,11 @@ import WebSocketComponent from './components/WebsocketComponent';
 import UserInfo from './components/UserInfo';
 import api from './services/api';
 import Feeds from './components/Feeds';
+import Logout from './components/Logout';
 
 function App() {
-  const [name, setName] = useState<string>();
-  const [password, setPassword] = useState<string>();
-  const [token, setToken] = useState<string>();
+  const [name, setName] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>();
   const [loginError, setLoginError] = useState<string>();
 
@@ -27,14 +27,19 @@ function App() {
 
     api
       .login(name, password)
-      .then((resp) => {
+      .then(() => {
         setIsLoggedIn(true);
-        setToken(resp.token);
       })
       .catch((err) => {
-        setLoginError(err);
+        setLoginError(err.message);
       });
   }, [name, password]);
+
+  const logout = useCallback(() => {
+    api.logout().then(() => {
+      setIsLoggedIn(false);
+    });
+  }, []);
 
   return (
     <div className="App">
@@ -64,8 +69,9 @@ function App() {
             {loginError}
           </form>
         )}
-        {isLoggedIn && token && (
+        {isLoggedIn && (
           <div>
+            <Logout logout={logout} />
             <UserInfo />
             <Feeds />
             <WebSocketComponent />
