@@ -7,5 +7,5 @@ pub fn connect_db(database_url: String) -> PgPool {
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     Pool::builder()
         .build(manager)
-        .expect("Failed to create pool.")
+        .expect("Failed to create pool")
 }

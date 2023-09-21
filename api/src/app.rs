@@ -4,8 +4,7 @@ use actix::Actor;
 use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::{error::Error, web, App};
-use utils::http_server::logger;
-use utils::{broker, db, http_server::cors};
+use utils::{broker, db, http::middlewares::build_server};
 
 use crate::actors::ws_server::WebsocketServer;
 use crate::config::Config;
@@ -44,9 +43,7 @@ pub fn setup_app(
     let user_service: Arc<dyn UserService> =
         Arc::new(UserServiceImpl::new(user_repo, events_service));
 
-    App::new()
-        .wrap(cors(config.cors_origin.clone()))
-        .wrap(logger())
+    build_server(config.cors_origin.clone())
         .app_data(web::Data::new(db_connection.clone()))
         .app_data(web::Data::from(user_service.clone()))
         .app_data(web::Data::new(ws_server.clone()))

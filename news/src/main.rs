@@ -1,13 +1,21 @@
 extern crate log;
 
+use actix_web::body::MessageBody;
+use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
+use actix_web::{error::Error as ActixError, web, App as ActixApp, HttpServer};
+use log::info;
+use std::thread;
+use std::{error::Error, sync::Arc};
+use tokio_cron_scheduler::{Job, JobScheduler};
+use utils::{db::connect_db, http::middlewares::build_server, logger::init_logger};
+
 use news::{
     app::App,
     config::Config,
+    handlers::feeds::get_feeds,
+    handlers::news::get_news,
     repositories::{feed_repository::FeedRepository, news_repository::NewsRepository},
 };
-use std::{error::Error, sync::Arc, thread};
-use tokio_cron_scheduler::{Job, JobScheduler};
-use utils::{db::connect_db, logger::init_logger};
 
 #[tokio::main]
 async fn main() {
@@ -15,15 +23,37 @@ async fn main() {
 
     init_logger(config.logs_path.clone());
 
-    let db_pool = connect_db(config.database_url);
+    let db_pool = connect_db(config.database_url.clone());
 
     let feed_repository = Arc::new(FeedRepository::new(Arc::new(db_pool.clone())));
     let news_repository = Arc::new(NewsRepository::new(Arc::new(db_pool.clone())));
 
-    let app = App::new(feed_repository, news_repository);
+    let app = App::new(feed_repository.clone(), news_repository.clone());
+
+    info!("Setting up cronjobs");
 
     if let Err(err) = setup_cronjobs(&app).await {
         panic!("failed setup cronjobs: {}", err);
+    };
+
+    let server_port = config.server_port.clone();
+
+    info!("Starting API server in port {}", server_port.clone());
+
+    let server_result = HttpServer::new(move || {
+        setup_http_server(&config, feed_repository.clone(), news_repository.clone())
+    })
+    .bind(format!("0.0.0.0:{}", server_port.clone()));
+
+    match server_result {
+        Ok(server) => {
+            if let Err(err) = server.run().await {
+                panic!("failed running server: {}", err)
+            }
+        }
+        Err(err) => {
+            panic!("failed building server: {}", err)
+        }
     }
 
     thread::park();
@@ -45,4 +75,24 @@ async fn setup_cronjobs(app: &App) -> Result<(), Box<dyn Error>> {
     sched.start().await?;
 
     Ok(())
+}
+
+fn setup_http_server(
+    config: &Config,
+    feed_repo: Arc<FeedRepository>,
+    news_repo: Arc<NewsRepository>,
+) -> ActixApp<
+    impl ServiceFactory<
+        ServiceRequest,
+        Response = ServiceResponse<impl MessageBody>,
+        Config = (),
+        InitError = (),
+        Error = ActixError,
+    >,
+> {
+    build_server(config.cors_origin.clone())
+        .app_data(web::Data::from(feed_repo.clone()))
+        .app_data(web::Data::from(news_repo.clone()))
+        .service(get_news)
+        .service(get_feeds)
 }

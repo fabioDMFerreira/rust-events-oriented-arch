@@ -18,3 +18,4 @@ utils={ path = "../utils", features = ["broker","database"] }
 chrono = "0.4.31"
 log = "0.4.20"
 tokio-cron-scheduler = "0.9.4"
+actix-web = "4.4.0"

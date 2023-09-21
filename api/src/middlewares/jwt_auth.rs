@@ -1,7 +1,7 @@
 use core::fmt;
 use std::future::{ready, Ready};
 
-use actix_web::error::{Error, ErrorUnauthorized};
+use actix_web::error::{Error as ActixError, ErrorUnauthorized};
 use actix_web::{dev::Payload, Error as ActixWebError};
 use actix_web::{http, web, FromRequest, HttpMessage, HttpRequest};
 use jsonwebtoken::{decode, DecodingKey, Validation};
@@ -41,7 +41,7 @@ impl FromRequest for JwtMiddleware {
                     .map(|h| h.to_str().unwrap().split_at(7).1.to_string())
             });
 
-        let json_error = |message: String| -> Error {
+        let json_error = |message: String| -> ActixError {
             ErrorUnauthorized(ErrorResponse {
                 status: "fail".to_string(),
                 message,
