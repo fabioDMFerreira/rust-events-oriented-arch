@@ -1,7 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import WebSocketComponent from './components/WebsocketComponent';
 import UserInfo from './components/UserInfo';
+import api from './services/api';
+import Feeds from './components/Feeds';
 
 function App() {
   const [name, setName] = useState<string>();
@@ -10,29 +12,27 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>();
   const [loginError, setLoginError] = useState<string>();
 
+  useEffect(() => {
+    if (api.token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   const login = useCallback(() => {
+    if (!name || !password) {
+      return;
+    }
+
     setLoginError('');
 
-    fetch('http://localhost:8000/auth/login', {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, password }),
-    })
-      .then(async (resp) => {
-        if (resp.status === 200) {
-          const json = await resp.json();
-          setIsLoggedIn(true);
-          setToken(json.token);
-        } else {
-          const err = await resp.text();
-          setLoginError(err);
-        }
+    api
+      .login(name, password)
+      .then((resp) => {
+        setIsLoggedIn(true);
+        setToken(resp.token);
       })
       .catch((err) => {
-        console.log(err);
+        setLoginError(err);
       });
   }, [name, password]);
 
@@ -66,8 +66,9 @@ function App() {
         )}
         {isLoggedIn && token && (
           <div>
-            <UserInfo token={token} />
-            <WebSocketComponent token={token} />
+            <UserInfo />
+            <Feeds />
+            <WebSocketComponent />
           </div>
         )}
       </div>

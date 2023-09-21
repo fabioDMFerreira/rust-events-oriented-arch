@@ -1,43 +1,19 @@
 import React, { useEffect } from 'react';
+import api from '../services/api';
 
-interface Props {
-  token: string;
-}
+interface Props {}
 
-const WebSocketComponent = ({ token }: Props) => {
+const WebSocketComponent = (_: Props) => {
   useEffect(() => {
-    // Connect to WebSocket server
-    const socket = new WebSocket('ws://localhost:8000/ws');
-
-    let interval: string | number | NodeJS.Timer | undefined;
-
-    // WebSocket event listeners
-    socket.onopen = () => {
-      console.log('WebSocket connection established.');
-      socket.send('/login ' + token);
-
-      interval = setInterval(() => {
-        socket.send('ping');
-      }, 1000);
-    };
-
-    socket.onmessage = (event) => {
+    const connDestruct = api.connectWs((event) => {
       console.log('WebSocket message received:', event.data);
-      // Handle the received message
-    };
-
-    socket.onclose = () => {
-      console.log('WebSocket connection closed.');
-    };
+    });
 
     // Clean up the WebSocket connection when the component unmounts
-    return () => {
-      socket.close();
-      clearInterval(interval);
-    };
+    return connDestruct;
   }, []);
 
-  return <div>WebSocket Component</div>;
+  return <span aria-description="websocket-placeholder"></span>;
 };
 
 export default WebSocketComponent;

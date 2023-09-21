@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import api from '../services/api';
 
-interface Props {
-  token: string;
-}
+interface Props {}
 
-const UserInfo = ({ token }: Props) => {
+const UserInfo = (_: Props) => {
   const [user, setUser] = useState<object>();
   const [err, setError] = useState<Error | null>();
 
   useEffect(() => {
     setError(null);
 
-    fetch('http://localhost:8000/auth/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(async (resp) => {
-        const user = await resp.json();
+    api
+      .me()
+      .then(async (user) => {
         setUser(user);
       })
       .catch((err) => setError(err));
