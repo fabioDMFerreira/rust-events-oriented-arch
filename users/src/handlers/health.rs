@@ -37,13 +37,11 @@ pub async fn get_health(pool: web::Data<utils::db::PgPool>) -> impl Responder {
         services: service_status.clone(),
     };
 
-    let http_response = if db_status == SERVICE_STATUS_OK {
+    if db_status == SERVICE_STATUS_OK {
         HttpResponse::Ok().json(response)
     } else {
         HttpResponse::InternalServerError().json(response)
-    };
-
-    return http_response;
+    }
 }
 
 // #[cfg(test)]

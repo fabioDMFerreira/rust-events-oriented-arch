@@ -17,7 +17,7 @@ pub struct KafkaEventService {
 
 impl KafkaEventService {
     pub fn new(producer: FutureProducer) -> Self {
-        KafkaEventService { producer: producer }
+        KafkaEventService { producer }
     }
 }
 

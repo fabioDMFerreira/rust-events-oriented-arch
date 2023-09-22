@@ -43,19 +43,17 @@ impl App {
             for news in news {
                 let db_news = self
                     .news_repo
-                    .find_by_fields(Some(news.title.clone()), Some(news.feed_id.clone()));
+                    .find_by_fields(Some(news.title.clone()), Some(news.feed_id));
 
-                if let Ok(db_news) = db_news {
-                    if let None = db_news {
-                        let result = self.news_repo.create(&news);
-                        if let Err(err) = result {
-                            error!("failed creating new {:?}: {}", news, err);
-                        } else {
-                            info!(
-                                "News with title {} of feed {} inserted!",
-                                news.title, news.feed_id
-                            );
-                        }
+                if let Ok(None) = db_news {
+                    let result = self.news_repo.create(&news);
+                    if let Err(err) = result {
+                        error!("failed creating new {:?}: {}", news, err);
+                    } else {
+                        info!(
+                            "News with title {} of feed {} inserted!",
+                            news.title, news.feed_id
+                        );
                     }
                 }
             }

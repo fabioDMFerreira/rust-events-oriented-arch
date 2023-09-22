@@ -30,10 +30,7 @@ pub struct UserServiceImpl {
 
 impl UserServiceImpl {
     pub fn new(repo: Arc<dyn UserRepository>, broker: Arc<dyn EventService>) -> Self {
-        UserServiceImpl {
-            repo: repo,
-            broker: broker,
-        }
+        UserServiceImpl { repo, broker }
     }
 }
 

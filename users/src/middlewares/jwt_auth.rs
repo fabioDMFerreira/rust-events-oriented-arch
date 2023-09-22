@@ -59,14 +59,14 @@ impl FromRequest for JwtMiddleware {
                 let user_id = uuid::Uuid::parse_str(&claims.sub).unwrap();
                 req.extensions_mut()
                     .insert::<uuid::Uuid>(user_id.to_owned());
-                return ready(Ok(JwtMiddleware { user_id }));
+                ready(Ok(JwtMiddleware { user_id }))
             } else {
-                return ready(Err(json_error("Invalid token".to_string())));
+                ready(Err(json_error("Invalid token".to_string())))
             }
         } else {
-            return ready(Err(json_error(
+            ready(Err(json_error(
                 "You are not logged in, please provide token".to_string(),
-            )));
+            )))
         }
     }
 }

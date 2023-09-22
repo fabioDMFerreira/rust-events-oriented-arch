@@ -10,8 +10,8 @@ async fn get_news(news_repo: web::Data<NewsRepository>) -> HttpResponse {
     match result {
         Err(err) => {
             error!("failed getting news: {}", err);
-            return HttpResponse::InternalServerError().finish();
+            HttpResponse::InternalServerError().finish()
         }
-        Ok(news) => return HttpResponse::Ok().json(news),
-    };
+        Ok(news) => HttpResponse::Ok().json(news),
+    }
 }

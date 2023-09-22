@@ -43,6 +43,12 @@ pub struct WebsocketServer {
     rng: ThreadRng,
 }
 
+impl Default for WebsocketServer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WebsocketServer {
     pub fn new() -> WebsocketServer {
         WebsocketServer {
@@ -78,8 +84,8 @@ impl Handler<SessionMessage> for WebsocketServer {
     fn handle(&mut self, msg: SessionMessage, _: &mut Context<Self>) {
         let session_result = self.sessions.get(&msg.id);
 
-        if session_result.is_some() {
-            session_result.unwrap().do_send(Message(msg.message));
+        if let Some(session_result) = session_result {
+            session_result.do_send(Message(msg.message));
         } else {
             warn!("server tried to send message to unknown session {}", msg.id);
         }

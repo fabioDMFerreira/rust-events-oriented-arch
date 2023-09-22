@@ -1,5 +1,7 @@
 # rust-events-oriented-arch
 
+[![Coverage Status](https://coveralls.io/repos/github/fabioDMFerreira/rust-events-oriented-arch/badge.svg?branch=main)](https://coveralls.io/github/fabioDMFerreira/rust-events-oriented-arch?branch=main)
+
 Basic application to learn Rust and events oriented architecture.
 
 ## Features

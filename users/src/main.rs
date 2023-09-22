@@ -6,7 +6,6 @@ use users::app;
 use users::config::Config;
 use utils::logger::init_logger;
 
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let config = Config::init();

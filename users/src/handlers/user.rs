@@ -27,10 +27,10 @@ async fn get_users(user_service: web::Data<dyn UserService>) -> HttpResponse {
     match result {
         Err(err) => {
             error!("failed getting users: {}", err);
-            return HttpResponse::InternalServerError().finish();
+            HttpResponse::InternalServerError().finish()
         }
-        Ok(users) => return HttpResponse::Ok().json(users),
-    };
+        Ok(users) => HttpResponse::Ok().json(users),
+    }
 }
 
 #[get("/users/{id}")]
@@ -43,9 +43,9 @@ async fn get_user_by_id(
     match result {
         Err(err) => {
             error!("failed getting user: {}", err);
-            return HttpResponse::InternalServerError().finish();
+            HttpResponse::InternalServerError().finish()
         }
-        Ok(user) => return HttpResponse::Ok().json(user),
+        Ok(user) => HttpResponse::Ok().json(user),
     }
 }
 
@@ -54,7 +54,7 @@ async fn create_user(
     user_service: web::Data<dyn UserService>,
     payload: Option<web::Json<CreateUserPayload>>,
 ) -> HttpResponse {
-    if let None = payload {
+    if payload.is_none() {
         return HttpResponse::BadRequest().body("empty body");
     }
 
@@ -68,9 +68,9 @@ async fn create_user(
     match user_service.create(name.unwrap(), password.unwrap()).await {
         Err(err) => {
             error!("failed creating user: {}", err);
-            return HttpResponse::InternalServerError().finish();
+            HttpResponse::InternalServerError().finish()
         }
-        Ok(new_user) => return HttpResponse::Ok().json(new_user),
+        Ok(new_user) => HttpResponse::Ok().json(new_user),
     }
 }
 
@@ -80,7 +80,7 @@ async fn update_user(
     payload: Option<web::Json<UpdateUserPayload>>,
     id: web::Path<Uuid>,
 ) -> HttpResponse {
-    if let None = payload {
+    if payload.is_none() {
         return HttpResponse::BadRequest().body("empty body");
     }
 
@@ -94,9 +94,9 @@ async fn update_user(
     match user_service.update(id.into_inner(), name.unwrap()).await {
         Err(err) => {
             error!("failed updating user: {}", err);
-            return HttpResponse::InternalServerError().finish();
+            HttpResponse::InternalServerError().finish()
         }
-        Ok(updated_user) => return HttpResponse::Ok().json(updated_user),
+        Ok(updated_user) => HttpResponse::Ok().json(updated_user),
     }
 }
 
@@ -108,9 +108,9 @@ async fn delete_user(
     match user_service.delete(id.into_inner()).await {
         Err(err) => {
             error!("failed deleting user: {}", err);
-            return HttpResponse::InternalServerError().finish();
+            HttpResponse::InternalServerError().finish()
         }
-        Ok(_) => return HttpResponse::Ok().finish(),
+        Ok(_) => HttpResponse::Ok().finish(),
     }
 }
 

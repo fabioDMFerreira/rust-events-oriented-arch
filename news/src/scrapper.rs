@@ -20,7 +20,7 @@ pub struct Scrapper {
 
 impl Scrapper {
     pub fn new(feeds: Vec<RssFeed>) -> Scrapper {
-        Scrapper { feeds: feeds }
+        Scrapper { feeds }
     }
 
     pub async fn scrap_all(&mut self, tx: Sender<Vec<News>>) -> Result<(), String> {
@@ -50,7 +50,7 @@ impl Scrapper {
                         let mut title = "".to_string();
                         let mut publish_date = chrono::Utc::now().naive_local().date();
 
-                        if feed_news.authors.len() > 0 {
+                        if !feed_news.authors.is_empty() {
                             author = feed_news.authors[0].name.clone();
                         }
 
@@ -141,5 +141,5 @@ async fn http_request(url: String) -> Result<Bytes, String> {
         return Ok(body);
     }
 
-    return Err(format!("Request was not successful: {}", response.status()));
+    Err(format!("Request was not successful: {}", response.status()))
 }

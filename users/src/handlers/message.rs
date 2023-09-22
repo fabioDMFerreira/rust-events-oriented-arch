@@ -21,7 +21,7 @@ async fn create_message(
     ws_server: Data<Addr<WebsocketServer>>,
     payload: Option<Json<MessagePayload>>,
 ) -> HttpResponse {
-    if let None = payload {
+    if payload.is_none() {
         return HttpResponse::BadRequest().body("empty body");
     }
 

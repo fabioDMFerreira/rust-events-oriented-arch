@@ -10,8 +10,8 @@ async fn get_feeds(feed_repo: web::Data<FeedRepository>) -> HttpResponse {
     match result {
         Err(err) => {
             error!("failed getting feeds: {}", err);
-            return HttpResponse::InternalServerError().finish();
+            HttpResponse::InternalServerError().finish()
         }
-        Ok(feeds) => return HttpResponse::Ok().json(feeds),
-    };
+        Ok(feeds) => HttpResponse::Ok().json(feeds),
+    }
 }

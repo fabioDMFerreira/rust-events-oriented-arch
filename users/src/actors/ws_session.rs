@@ -116,9 +116,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebsocketSession 
                 if msg.starts_with("/login") {
                     // if there is a token after the command /login check whether the token is valid
                     // if token is valid set the session as authenticated and set the session id with the user id
-                    if let Some(token) = msg.splitn(2, ' ').nth(1).filter(|s| !s.is_empty()) {
+                    if let Some(token) = msg.split_once(' ').map(|x| x.1) {
                         match decode::<TokenClaims>(
-                            &token,
+                            token,
                             &DecodingKey::from_secret(self.config.jwt_secret.as_ref()),
                             &Validation::default(),
                         ) {

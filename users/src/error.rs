@@ -19,10 +19,10 @@ pub struct RepositoryError {
     pub message: String,
 }
 
-impl Into<CommonError> for RepositoryError {
-    fn into(self) -> CommonError {
-        CommonError {
-            message: self.message,
+impl From<RepositoryError> for CommonError {
+    fn from(val: RepositoryError) -> Self {
+        Self {
+            message: val.message,
             code: 1,
         }
     }
@@ -33,10 +33,10 @@ pub struct BrokerError {
     pub message: String,
 }
 
-impl Into<CommonError> for BrokerError {
-    fn into(self) -> CommonError {
+impl From<BrokerError> for CommonError {
+    fn from(val: BrokerError) -> Self {
         CommonError {
-            message: self.message,
+            message: val.message,
             code: 2,
         }
     }

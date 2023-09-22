@@ -42,7 +42,7 @@ pub async fn login_handler(
     config: web::Data<Config>,
     payload: Option<web::Json<LoginPayload>>,
 ) -> HttpResponse {
-    if let None = payload {
+    if payload.is_none() {
         return HttpResponse::BadRequest().body("empty body");
     }
 
@@ -92,7 +92,7 @@ pub async fn login_handler(
 
     let cookie = Cookie::build("token", token.to_owned())
         .path("/")
-        .max_age(ActixWebDuration::new(config.jwt_max_age.clone(), 0))
+        .max_age(ActixWebDuration::new(config.jwt_max_age, 0))
         .http_only(true)
         .finish();
 
@@ -107,10 +107,9 @@ pub async fn me_handler(
     r: HttpRequest,
     _: JwtMiddleware,
 ) -> HttpResponse {
-    let ext = r.extensions();
-    let user_id = ext.get::<uuid::Uuid>().unwrap();
+    let user_id = *r.extensions().get::<uuid::Uuid>().unwrap();
 
-    match user_service.get_by_id(user_id.clone()).await {
+    match user_service.get_by_id(user_id).await {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(err) => {
             error!("failed getting user {}: {}", user_id, err);

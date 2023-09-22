@@ -12,24 +12,22 @@ pub mod serde_naive_date {
         time: &Option<NaiveDate>,
         serializer: S,
     ) -> Result<S::Ok, S::Error> {
-        let result = match time {
-            Some(time) => time_to_json(time.clone()).serialize(serializer),
+        match time {
+            Some(time) => time_to_json(*time).serialize(serializer),
             None => "".serialize(serializer),
-        };
-
-        return result;
+        }
     }
 
     pub fn deserialize<'de, D: Deserializer<'de>>(
         deserializer: D,
     ) -> Result<Option<NaiveDate>, D::Error> {
         let time: &str = Deserialize::deserialize(deserializer)?;
-        if time.len() > 0 {
-            return Ok(Some(
+        if !time.is_empty() {
+            Ok(Some(
                 NaiveDate::parse_from_str(time, "%Y-%m-%d").map_err(D::Error::custom)?,
-            ));
+            ))
         } else {
-            return Ok(None);
+            Ok(None)
         }
     }
 }
