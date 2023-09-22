@@ -25,7 +25,7 @@ RUN echo "[workspace]\n\
   \"utils\"\n\
   ]" > ./Cargo.toml
 
-COPY ./api/Cargo.toml ./api/Cargo.lock ./api/
+COPY ./api/Cargo.toml ./api/
 COPY ./utils/Cargo.toml ./utils/
 
 RUN mkdir api/src

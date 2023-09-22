@@ -124,9 +124,9 @@ mod tests {
     use serde_json;
     use std::str::FromStr;
     use std::sync::Arc;
+    use utils::error::CommonError;
     use uuid::Uuid;
 
-    use crate::error::CommonError;
     use crate::models::user::User;
     use crate::services::user_service::MockUserService;
 

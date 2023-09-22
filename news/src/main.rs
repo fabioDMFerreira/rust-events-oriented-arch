@@ -4,6 +4,8 @@ use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::{error::Error as ActixError, web, App as ActixApp, HttpServer};
 use log::info;
+use news::repositories::feed_repository::FeedDieselRepository;
+use news::repositories::news_repository::NewsDieselRepository;
 use std::thread;
 use std::{error::Error, sync::Arc};
 use tokio_cron_scheduler::{Job, JobScheduler};
@@ -25,8 +27,10 @@ async fn main() {
 
     let db_pool = connect_db(config.database_url.clone());
 
-    let feed_repository = Arc::new(FeedRepository::new(Arc::new(db_pool.clone())));
-    let news_repository = Arc::new(NewsRepository::new(Arc::new(db_pool.clone())));
+    let feed_repository: Arc<dyn FeedRepository> =
+        Arc::new(FeedDieselRepository::new(Arc::new(db_pool.clone())));
+    let news_repository: Arc<dyn NewsRepository> =
+        Arc::new(NewsDieselRepository::new(Arc::new(db_pool.clone())));
 
     let app = App::new(feed_repository.clone(), news_repository.clone());
 
@@ -79,8 +83,8 @@ async fn setup_cronjobs(app: &App) -> Result<(), Box<dyn Error>> {
 
 fn setup_http_server(
     config: &Config,
-    feed_repo: Arc<FeedRepository>,
-    news_repo: Arc<NewsRepository>,
+    feed_repo: Arc<dyn FeedRepository>,
+    news_repo: Arc<dyn NewsRepository>,
 ) -> ActixApp<
     impl ServiceFactory<
         ServiceRequest,

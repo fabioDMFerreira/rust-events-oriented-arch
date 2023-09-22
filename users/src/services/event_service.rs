@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use mockall::automock;
 use rdkafka::producer::FutureProducer;
-use utils::broker;
+use utils::{broker, error::BrokerError};
 
-use crate::{error::BrokerError, models::user::User};
+use crate::models::user::User;
 
 #[automock]
 #[async_trait]

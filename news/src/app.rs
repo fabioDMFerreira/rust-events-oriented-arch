@@ -7,15 +7,16 @@ use crate::{
 };
 use log::{debug, error, info};
 use tokio::{sync::mpsc, task};
+use utils::error::CommonError;
 
 #[derive(Clone)]
 pub struct App {
-    pub feed_repo: Arc<FeedRepository>,
-    pub news_repo: Arc<NewsRepository>,
+    pub feed_repo: Arc<dyn FeedRepository>,
+    pub news_repo: Arc<dyn NewsRepository>,
 }
 
 impl App {
-    pub fn new(feed_repo: Arc<FeedRepository>, news_repo: Arc<NewsRepository>) -> App {
+    pub fn new(feed_repo: Arc<dyn FeedRepository>, news_repo: Arc<dyn NewsRepository>) -> App {
         App {
             feed_repo,
             news_repo,
@@ -32,8 +33,7 @@ impl App {
         let (tx, mut rx) = mpsc::channel::<Vec<News>>(BUFFER_SIZE);
 
         task::spawn(async move {
-            let mut scrapper = Scrapper::new(feeds);
-            let result = scrapper.scrap_all(tx).await;
+            let result = Scrapper::scrap_all(feeds, tx).await;
             if let Err(err) = result {
                 error!("failed scrapping feeds: {}", err);
             }
@@ -48,7 +48,7 @@ impl App {
                 if let Ok(None) = db_news {
                     let result = self.news_repo.create(&news);
                     if let Err(err) = result {
-                        error!("failed creating new {:?}: {}", news, err);
+                        error!("failed creating new {:?}: {}", news, CommonError::from(err));
                     } else {
                         info!(
                             "News with title {} of feed {} inserted!",

@@ -8,33 +8,29 @@ use log::error;
 use reqwest::get;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::Semaphore;
+use utils::error::CommonError;
+use utils::error::HttpError;
 use uuid::Uuid;
 
 use crate::models::feed::Feed as RssFeed;
 use crate::models::news::News;
 
 #[derive(Clone)]
-pub struct Scrapper {
-    pub feeds: Vec<RssFeed>,
-}
+pub struct Scrapper {}
 
 impl Scrapper {
-    pub fn new(feeds: Vec<RssFeed>) -> Scrapper {
-        Scrapper { feeds }
-    }
-
-    pub async fn scrap_all(&mut self, tx: Sender<Vec<News>>) -> Result<(), String> {
+    pub async fn scrap_all(feeds: Vec<RssFeed>, tx: Sender<Vec<News>>) -> Result<(), String> {
         let max_concurrency = 5; // Define the maximum concurrency limit
 
         let semaphore = Semaphore::new(max_concurrency);
         let mut tasks = FuturesUnordered::new();
 
-        for current_feed in &self.feeds {
+        for current_feed in &feeds {
             let permit = semaphore
                 .acquire()
                 .await
                 .expect("Semaphore acquisition failed");
-            let task = Scrapper::scrap_with_retry(current_feed.clone(), permit);
+            let task = Self::scrap_with_retry(current_feed.clone(), permit);
             tasks.push(task);
         }
 
@@ -95,7 +91,7 @@ impl Scrapper {
     async fn scrap_with_retry(
         rss_feed: RssFeed,
         permit: tokio::sync::SemaphorePermit<'_>,
-    ) -> Result<(RssFeed, Feed), (RssFeed, String)> {
+    ) -> Result<(RssFeed, Feed), (RssFeed, CommonError)> {
         let mut retry_count = 0;
 
         loop {
@@ -115,10 +111,10 @@ impl Scrapper {
         }
     }
 
-    async fn scrap(rss_feed: &RssFeed) -> Result<Feed, String> {
+    async fn scrap(rss_feed: &RssFeed) -> Result<Feed, CommonError> {
         let xml = http_request(rss_feed.url.clone())
             .await
-            .expect("Failed to send request");
+            .map_err(|v| CommonError::from(v))?;
 
         let feed = parser::parse(xml.reader()).unwrap();
 
@@ -126,20 +122,82 @@ impl Scrapper {
     }
 }
 
-async fn http_request(url: String) -> Result<Bytes, String> {
+async fn http_request(url: String) -> Result<Bytes, HttpError> {
     // Send an HTTP GET request to a URL
-    let response = get(url).await.expect("Failed to send request");
+    let response = get(url).await.map_err(|v| HttpError {
+        message: format!("failed to send request: {}", v),
+    })?;
 
     // Check if the request was successful
     if response.status().is_success() {
         // Read the response body as a string
-        let body = response
-            .bytes()
-            .await
-            .expect("Failed to read response body");
+        let body = response.bytes().await.map_err(|v| HttpError {
+            message: format!("failed to read response body: {}", v),
+        })?;
 
         return Ok(body);
     }
 
-    Err(format!("Request was not successful: {}", response.status()))
+    Err(HttpError {
+        message: format!("Request was not successful: {}", response.status().as_str()),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_http_request_success() {
+        let mut server = mockito::Server::new();
+
+        // Arrange
+        let expected_body = "Hello, World!";
+        let _m = server
+            .mock("GET", "/")
+            .with_body(expected_body)
+            .with_status(200)
+            .create();
+
+        // Act
+        let result = http_request(server.url().to_string()).await;
+
+        // Assert
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), expected_body.as_bytes().to_vec());
+    }
+
+    #[tokio::test]
+    async fn test_http_request_failure() {
+        let mut server = mockito::Server::new();
+
+        // Arrange
+        let _m = server.mock("GET", "/").with_status(500).create();
+
+        // Act
+        let result = http_request(server.url().to_string()).await;
+
+        // Assert
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().message,
+            format!("Request was not successful: {}", 500)
+        );
+    }
+
+    #[tokio::test]
+    async fn test_http_request_error() {
+        // Arrange
+        let url = "invalid url";
+
+        // Act
+        let result = http_request(url.to_string()).await;
+
+        // Assert
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .message
+            .contains("failed to send request:"));
+    }
 }

@@ -1,43 +1,66 @@
 use std::sync::Arc;
 
 use diesel::prelude::*;
+use mockall::automock;
 use utils::db::PgPool;
+use utils::error::DatabaseError;
 use uuid::Uuid;
 
 use crate::models::news::News;
 use crate::schema::news;
 
-pub struct NewsRepository {
+#[automock]
+pub trait NewsRepository: Send + Sync {
+    fn list(&self) -> Result<Vec<News>, DatabaseError>;
+    fn find_by_id(&self, news_id: Uuid) -> Result<Option<News>, DatabaseError>;
+    fn find_by_fields(
+        &self,
+        title: Option<String>,
+        feed_id: Option<Uuid>,
+    ) -> Result<Option<News>, DatabaseError>;
+    fn create(&self, news: &News) -> Result<News, DatabaseError>;
+    fn delete(&self, news_id: Uuid) -> Result<usize, DatabaseError>;
+}
+
+pub struct NewsDieselRepository {
     pool: Arc<PgPool>,
 }
 
-impl NewsRepository {
+impl NewsDieselRepository {
     pub fn new(pool: Arc<PgPool>) -> Self {
-        NewsRepository { pool }
+        NewsDieselRepository { pool }
     }
+}
 
-    pub fn create(&self, news: &News) -> Result<News, diesel::result::Error> {
+impl NewsRepository for NewsDieselRepository {
+    fn create(&self, news: &News) -> Result<News, DatabaseError> {
         let mut conn = self.pool.get().unwrap();
 
         diesel::insert_into(news::table)
             .values(news)
             .get_result(&mut conn)
+            .map_err(|err| DatabaseError {
+                message: err.to_string(),
+            })
     }
 
-    pub fn find_by_id(&self, news_id: Uuid) -> Result<Option<News>, diesel::result::Error> {
+    fn find_by_id(&self, news_id: Uuid) -> Result<Option<News>, DatabaseError> {
         let mut conn = self.pool.get().unwrap();
 
         news::table
             .filter(news::id.eq(news_id))
             .first(&mut conn)
             .optional()
+            .map_err(|err| DatabaseError {
+                message: err.to_string(),
+            })
     }
 
-    pub fn find_by_fields(
+    fn find_by_fields(
         &self,
         title: Option<String>,
         feed_id: Option<Uuid>,
-    ) -> Result<Option<News>, diesel::result::Error> {
+    ) -> Result<Option<News>, DatabaseError> {
         let mut conn = self.pool.get().unwrap();
 
         let mut query = news::table.into_boxed();
@@ -50,18 +73,31 @@ impl NewsRepository {
             query = query.filter(news::feed_id.eq(feed_id));
         }
 
-        query.first(&mut conn).optional()
+        query
+            .first(&mut conn)
+            .optional()
+            .map_err(|err| DatabaseError {
+                message: err.to_string(),
+            })
     }
 
-    pub fn list(&self) -> Result<Vec<News>, diesel::result::Error> {
+    fn list(&self) -> Result<Vec<News>, DatabaseError> {
         let mut conn = self.pool.get().unwrap();
 
-        news::table.load::<News>(&mut conn)
+        news::table
+            .load::<News>(&mut conn)
+            .map_err(|err| DatabaseError {
+                message: err.to_string(),
+            })
     }
 
-    pub fn delete(&self, news_id: Uuid) -> Result<usize, diesel::result::Error> {
+    fn delete(&self, news_id: Uuid) -> Result<usize, DatabaseError> {
         let mut conn = self.pool.get().unwrap();
 
-        diesel::delete(news::table.find(news_id)).execute(&mut conn)
+        diesel::delete(news::table.find(news_id))
+            .execute(&mut conn)
+            .map_err(|err| DatabaseError {
+                message: err.to_string(),
+            })
     }
 }

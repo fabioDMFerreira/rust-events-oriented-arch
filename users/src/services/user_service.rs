@@ -4,9 +4,9 @@ use async_trait::async_trait;
 use log::error;
 use mockall::automock;
 use std::sync::Arc;
+use utils::error::CommonError;
 use uuid::Uuid;
 
-use crate::error::CommonError;
 use crate::models::user::User;
 use crate::repositories::user_repository::UserRepository;
 
@@ -100,10 +100,8 @@ impl UserService for UserServiceImpl {
 
 #[cfg(test)]
 mod tests {
-    use crate::error::BrokerError;
     use crate::{
-        error::RepositoryError, models::user::User,
-        repositories::user_repository::MockUserRepository,
+        models::user::User, repositories::user_repository::MockUserRepository,
         services::event_service::MockEventService,
     };
 
@@ -111,12 +109,13 @@ mod tests {
     use mockall::predicate::eq;
     use rstest::*;
     use std::str::FromStr;
+    use utils::error::{BrokerError, DatabaseError};
     use uuid::Uuid;
 
     struct CreateUserTestCase {
         user: User,
         expected_result: Result<User, CommonError>,
-        service_result: Result<User, RepositoryError>,
+        service_result: Result<User, DatabaseError>,
         broker_result: Result<(), BrokerError>,
     }
 
@@ -149,7 +148,7 @@ mod tests {
             name: "John Doe".to_string(),
             password: "1234".to_string(),
         },
-        service_result: Err(RepositoryError { message: "db is down".to_owned() }),
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
         expected_result: Err(CommonError { message: "db is down".to_owned(), code:1}),
         broker_result: Ok(()),
     })]
@@ -220,7 +219,7 @@ mod tests {
 
     struct ListUsersTestCase {
         expected_result: Result<Vec<User>, CommonError>,
-        service_result: Result<Vec<User>, RepositoryError>,
+        service_result: Result<Vec<User>, DatabaseError>,
     }
 
     #[rstest]
@@ -239,7 +238,7 @@ mod tests {
     })]
     #[case::error(ListUsersTestCase{
         expected_result: Err(CommonError { message: "db is down".to_owned(), code:1 }),
-        service_result: Err(RepositoryError { message: "db is down".to_owned() }),
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
     })]
     #[tokio::test]
     async fn test_list_users(#[case] case: ListUsersTestCase) {
@@ -265,7 +264,7 @@ mod tests {
     struct GetUserByIdTestCase {
         id: uuid::Uuid,
         expected_result: Result<User, CommonError>,
-        service_result: Result<User, RepositoryError>,
+        service_result: Result<User, DatabaseError>,
     }
 
     #[rstest]
@@ -286,7 +285,7 @@ mod tests {
     #[case::error(GetUserByIdTestCase{
         id:     Uuid::from_str("b73ccd26-1832-4d10-9251-271ce453cee3").unwrap(),
         expected_result: Err(CommonError { message: "db is down".to_owned(), code:1 }),
-        service_result: Err(RepositoryError { message: "db is down".to_owned() }),
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
     })]
     #[tokio::test]
     async fn test_get_user_by_id(#[case] case: GetUserByIdTestCase) {
@@ -313,7 +312,7 @@ mod tests {
     struct GetUserByNameTestCase {
         name: String,
         expected_result: Result<User, CommonError>,
-        service_result: Result<User, RepositoryError>,
+        service_result: Result<User, DatabaseError>,
     }
 
     #[rstest]
@@ -334,7 +333,7 @@ mod tests {
     #[case::error(GetUserByNameTestCase{
         name:    "John".to_owned(),
         expected_result: Err(CommonError { message: "db is down".to_owned(), code:1 }),
-        service_result: Err(RepositoryError { message: "db is down".to_owned() }),
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
     })]
     #[tokio::test]
     async fn test_get_user_by_name(#[case] case: GetUserByNameTestCase) {
@@ -362,7 +361,7 @@ mod tests {
         id: uuid::Uuid,
         update: String,
         expected_result: Result<User, CommonError>,
-        service_result: Result<User, RepositoryError>,
+        service_result: Result<User, DatabaseError>,
     }
 
     #[rstest]
@@ -385,7 +384,7 @@ mod tests {
         id:     Uuid::from_str("b73ccd26-1832-4d10-9251-271ce453cee3").unwrap(),
         update: "John".to_owned(),
         expected_result: Err(CommonError { message: "db is down".to_owned(), code:1 }),
-        service_result: Err(RepositoryError { message: "db is down".to_owned() }),
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
     })]
     #[tokio::test]
     async fn test_update_user(#[case] case: UpdateUserTestCase) {
@@ -412,7 +411,7 @@ mod tests {
     struct DeleteUserTestCase {
         id: uuid::Uuid,
         expected_result: Result<usize, CommonError>,
-        service_result: Result<usize, RepositoryError>,
+        service_result: Result<usize, DatabaseError>,
     }
 
     #[rstest]
@@ -424,7 +423,7 @@ mod tests {
     #[case::error(DeleteUserTestCase{
         id:     Uuid::from_str("b73ccd26-1832-4d10-9251-271ce453cee3").unwrap(),
         expected_result: Err(CommonError { message: "db is down".to_owned(), code:1 }),
-        service_result: Err(RepositoryError { message: "db is down".to_owned() }),
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
     })]
     #[tokio::test]
     async fn test_delete_user(#[case] case: DeleteUserTestCase) {

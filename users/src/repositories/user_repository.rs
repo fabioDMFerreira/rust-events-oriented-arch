@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::error::{DieselRepositoryError, RepositoryError};
+use crate::error::DieselRepositoryError;
 use crate::models::user::User;
 use crate::schema::users;
 use actix_threadpool::run;
@@ -8,17 +8,18 @@ use async_trait::async_trait;
 use diesel::prelude::*;
 use mockall::automock;
 use utils::db::PgPool;
+use utils::error::DatabaseError;
 use uuid::Uuid;
 
 #[automock]
 #[async_trait]
 pub trait UserRepository: Send + Sync {
-    async fn create(&self, name: String, password: String) -> Result<User, RepositoryError>;
-    async fn list(&self) -> Result<Vec<User>, RepositoryError>;
-    async fn get_by_id(&self, user_id: Uuid) -> Result<User, RepositoryError>;
-    async fn get_by_name(&self, name: String) -> Result<User, RepositoryError>;
-    async fn update(&self, user_id: Uuid, name: String) -> Result<User, RepositoryError>;
-    async fn delete(&self, user_id: Uuid) -> Result<usize, RepositoryError>;
+    async fn create(&self, name: String, password: String) -> Result<User, DatabaseError>;
+    async fn list(&self) -> Result<Vec<User>, DatabaseError>;
+    async fn get_by_id(&self, user_id: Uuid) -> Result<User, DatabaseError>;
+    async fn get_by_name(&self, name: String) -> Result<User, DatabaseError>;
+    async fn update(&self, user_id: Uuid, name: String) -> Result<User, DatabaseError>;
+    async fn delete(&self, user_id: Uuid) -> Result<usize, DatabaseError>;
 }
 
 pub struct UserDieselRepository {
@@ -33,7 +34,7 @@ impl UserDieselRepository {
 
 #[async_trait]
 impl UserRepository for UserDieselRepository {
-    async fn create(&self, name: String, password: String) -> Result<User, RepositoryError> {
+    async fn create(&self, name: String, password: String) -> Result<User, DatabaseError> {
         let new_user = User {
             id: Uuid::new_v4(),
             name,
@@ -55,7 +56,7 @@ impl UserRepository for UserDieselRepository {
         Ok(inserted_user)
     }
 
-    async fn list(&self) -> Result<Vec<User>, RepositoryError> {
+    async fn list(&self) -> Result<Vec<User>, DatabaseError> {
         let pool = self.pool.clone();
 
         let users = run(move || {
@@ -69,7 +70,7 @@ impl UserRepository for UserDieselRepository {
         Ok(users)
     }
 
-    async fn get_by_id(&self, user_id: Uuid) -> Result<User, RepositoryError> {
+    async fn get_by_id(&self, user_id: Uuid) -> Result<User, DatabaseError> {
         let pool = self.pool.clone();
 
         let user = run(move || {
@@ -83,7 +84,7 @@ impl UserRepository for UserDieselRepository {
         Ok(user)
     }
 
-    async fn get_by_name(&self, name: String) -> Result<User, RepositoryError> {
+    async fn get_by_name(&self, name: String) -> Result<User, DatabaseError> {
         let pool = self.pool.clone();
 
         let user = run(move || {
@@ -97,7 +98,7 @@ impl UserRepository for UserDieselRepository {
         Ok(user)
     }
 
-    async fn update(&self, user_id: Uuid, name: String) -> Result<User, RepositoryError> {
+    async fn update(&self, user_id: Uuid, name: String) -> Result<User, DatabaseError> {
         let pool = self.pool.clone();
 
         let user = run(move || {
@@ -113,7 +114,7 @@ impl UserRepository for UserDieselRepository {
         Ok(user)
     }
 
-    async fn delete(&self, user_id: Uuid) -> Result<usize, RepositoryError> {
+    async fn delete(&self, user_id: Uuid) -> Result<usize, DatabaseError> {
         let pool = self.pool.clone();
 
         let user_id = run(move || {

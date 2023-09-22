@@ -23,7 +23,7 @@ RUN echo "[workspace]\n\
   \"utils\"\n\
   ]" > ./Cargo.toml
 
-COPY ./users/Cargo.toml ./users/Cargo.lock ./users/
+COPY ./users/Cargo.toml ./users/
 COPY ./utils/Cargo.toml ./utils/
 
 RUN mkdir users/src
