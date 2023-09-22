@@ -1,6 +1,6 @@
 pub use actix_threadpool::BlockingError;
 use diesel::r2d2;
-use utils::error::{CommonError, DatabaseError};
+use utils::error::DatabaseError;
 
 #[derive(Debug)]
 pub struct DieselRepositoryError(DatabaseError);
