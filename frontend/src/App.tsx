@@ -73,8 +73,8 @@ function App() {
           <div>
             <Logout logout={logout} />
             <UserInfo />
-            <Feeds />
             <WebSocketComponent />
+            <Feeds />
           </div>
         )}
       </div>

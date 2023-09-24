@@ -12,6 +12,7 @@ use crate::schema::subscriptions;
 #[automock]
 pub trait SubscriptionRepository: Send + Sync {
     fn list_by_user(&self, user_id: Uuid) -> Result<Vec<Subscription>, DatabaseError>;
+    fn list_by_feed(&self, feed_id: Uuid) -> Result<Vec<Subscription>, DatabaseError>;
     fn find_by_id(
         &self,
         feed_id: Uuid,
@@ -68,6 +69,17 @@ impl SubscriptionRepository for SubscriptionsDieselRepository {
 
         subscriptions::table
             .filter(subscriptions::user_id.eq(user_id))
+            .load::<Subscription>(&mut conn)
+            .map_err(|err| DatabaseError {
+                message: err.to_string(),
+            })
+    }
+
+    fn list_by_feed(&self, feed_id: Uuid) -> Result<Vec<Subscription>, DatabaseError> {
+        let mut conn = self.pool.get().unwrap();
+
+        subscriptions::table
+            .filter(subscriptions::feed_id.eq(feed_id))
             .load::<Subscription>(&mut conn)
             .map_err(|err| DatabaseError {
                 message: err.to_string(),

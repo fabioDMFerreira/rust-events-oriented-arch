@@ -7,19 +7,28 @@ use crate::{
 };
 use log::{debug, error, info};
 use tokio::{sync::mpsc, task};
-use utils::error::CommonError;
+use utils::{
+    broker::{self, KafkaProducer},
+    error::CommonError,
+};
 
 #[derive(Clone)]
 pub struct App {
     pub feed_repo: Arc<dyn FeedRepository>,
     pub news_repo: Arc<dyn NewsRepository>,
+    pub kafka_producer: KafkaProducer,
 }
 
 impl App {
-    pub fn new(feed_repo: Arc<dyn FeedRepository>, news_repo: Arc<dyn NewsRepository>) -> App {
+    pub fn new(
+        feed_repo: Arc<dyn FeedRepository>,
+        news_repo: Arc<dyn NewsRepository>,
+        kafka_producer: KafkaProducer,
+    ) -> App {
         App {
             feed_repo,
             news_repo,
+            kafka_producer,
         }
     }
 
@@ -47,13 +56,22 @@ impl App {
 
                 if let Ok(None) = db_news {
                     let result = self.news_repo.create(&news);
-                    if let Err(err) = result {
-                        error!("failed creating new {:?}: {}", news, CommonError::from(err));
-                    } else {
-                        info!(
-                            "News with title {} of feed {} inserted!",
-                            news.title, news.feed_id
-                        );
+                    match result {
+                        Ok(news) => {
+                            info!(
+                                "News with title {} of feed {} inserted!",
+                                news.title, news.feed_id
+                            );
+                            let _ = broker::send_message_to_topic(
+                                self.kafka_producer.clone(),
+                                "news_created".to_string(),
+                                serde_json::to_string(&news).unwrap(),
+                            )
+                            .await;
+                        }
+                        Err(err) => {
+                            error!("failed creating new {:?}: {}", news, CommonError::from(err));
+                        }
                     }
                 }
             }

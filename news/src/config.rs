@@ -7,6 +7,7 @@ pub struct Config {
     pub logs_path: String,
     pub server_port: String,
     pub jwt_secret: String,
+    pub kafka_url: String,
 }
 
 impl JwtMiddlewareConfig for Config {
@@ -22,6 +23,7 @@ impl Config {
         let logs_path = std::env::var("LOGS_PATH").unwrap_or_else(|_| String::from(""));
         let server_port = std::env::var("PORT").unwrap_or_else(|_| String::from("8000"));
         let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+        let kafka_url = std::env::var("KAFKA_URL").expect("KAFKA_URL must be set");
 
         Config {
             cors_origin,
@@ -29,6 +31,7 @@ impl Config {
             logs_path,
             server_port,
             jwt_secret,
+            kafka_url,
         }
     }
 }

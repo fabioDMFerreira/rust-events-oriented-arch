@@ -1452,8 +1452,10 @@ dependencies = [
 name = "news"
 version = "0.1.0"
 dependencies = [
+ "actix",
  "actix-rt",
  "actix-web",
+ "actix-web-actors",
  "async-trait",
  "bytes",
  "chrono",
@@ -1463,6 +1465,7 @@ dependencies = [
  "log",
  "mockall",
  "mockito",
+ "rdkafka",
  "reqwest",
  "serde",
  "serde_json",

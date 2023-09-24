@@ -11,7 +11,9 @@ use rdkafka::{
     ClientConfig,
 };
 
-pub fn create_producer(kafka_url: String) -> FutureProducer {
+pub type KafkaProducer = FutureProducer;
+
+pub fn create_producer(kafka_url: String) -> KafkaProducer {
     ClientConfig::new()
         .set("bootstrap.servers", kafka_url)
         .set("message.timeout.ms", "5000")
@@ -20,7 +22,7 @@ pub fn create_producer(kafka_url: String) -> FutureProducer {
 }
 
 pub async fn send_message_to_topic(
-    producer: FutureProducer,
+    producer: KafkaProducer,
     topic: String,
     message: String,
 ) -> Result<(i32, i64), (KafkaError, OwnedMessage)> {
