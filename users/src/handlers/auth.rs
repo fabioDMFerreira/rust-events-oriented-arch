@@ -8,12 +8,10 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use utils::http::middlewares::jwt_auth::{JwtMiddleware, TokenClaims};
 use validator::Validate;
 
-use crate::{
-    config::Config, middlewares::jwt_auth::JwtMiddleware, models::token_claims::TokenClaims,
-    services::user_service::UserService,
-};
+use crate::{config::Config, services::user_service::UserService};
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct LoginPayload {

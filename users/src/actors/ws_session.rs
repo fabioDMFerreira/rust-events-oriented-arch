@@ -6,9 +6,9 @@ use actix::{Actor, AsyncContext, StreamHandler};
 use actix_web_actors::ws;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use log::warn;
+use utils::http::middlewares::jwt_auth::TokenClaims;
 
 use crate::config::Config;
-use crate::models::token_claims::TokenClaims;
 
 use super::ws_server::{Connect, Disconnect, Message, Swap, WebsocketServer};
 

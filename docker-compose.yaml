@@ -110,6 +110,7 @@ services:
       RUST_LOG: debug
       CORS_ORIGIN: http://localhost:3000
       PORT: 8001
+      JWT_SECRET: users-secret-1234
     depends_on:
       postgres:
         condition: service_healthy

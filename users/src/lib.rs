@@ -3,7 +3,6 @@ pub mod app;
 pub mod config;
 pub mod error;
 pub mod handlers;
-pub mod middlewares;
 pub mod models;
 pub mod repositories;
 pub mod schema;

@@ -35,3 +35,5 @@ deploy-k8s:
 	kubectl apply -f ./k8s/migrations.yaml
 	kubectl apply -f ./k8s/deployment.yaml
 
+reset-k8s:
+	kubectl delete all --all

@@ -4,7 +4,8 @@ use actix::Actor;
 use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::{error::Error, web, App};
-use utils::{broker, db, http::middlewares::build_server};
+use utils::http::middlewares::jwt_auth::JwtMiddlewareConfig;
+use utils::{broker, db, http::utils::build_server};
 
 use crate::actors::ws_server::WebsocketServer;
 use crate::config::Config;
@@ -43,11 +44,14 @@ pub fn setup_app(
     let user_service: Arc<dyn UserService> =
         Arc::new(UserServiceImpl::new(user_repo, events_service));
 
+    let jwt_config: Arc<dyn JwtMiddlewareConfig> = Arc::new(config.clone());
+
     build_server(config.cors_origin.clone())
         .app_data(web::Data::new(db_connection.clone()))
         .app_data(web::Data::from(user_service.clone()))
         .app_data(web::Data::new(ws_server.clone()))
         .app_data(web::Data::new(config.clone()))
+        .app_data(web::Data::from(jwt_config.clone()))
         .service(get_index)
         .service(get_health)
         .service(get_ws)

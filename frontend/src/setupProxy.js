@@ -13,6 +13,16 @@ module.exports = function (app) {
       })
     )
     .use(
+      '/api/subscriptions',
+      createProxyMiddleware({
+        target: 'http://news:8001',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/api/': '/',
+        },
+      })
+    )
+    .use(
       '/api/feeds',
       createProxyMiddleware({
         target: 'http://news:8001',

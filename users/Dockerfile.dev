@@ -21,23 +21,23 @@ RUN cargo install cargo-watch
 
 RUN echo "[workspace]\n\
   members = [\n\
-  \"api\",\n\
+  \"users\",\n\
   \"utils\"\n\
   ]" > ./Cargo.toml
 
-COPY ./api/Cargo.toml ./api/
+COPY ./users/Cargo.toml ./users/
 COPY ./utils/Cargo.toml ./utils/
 
-RUN mkdir api/src
-RUN echo "fn main() {}" > ./api/src/main.rs
+RUN mkdir users/src
+RUN echo "fn main() {}" > ./users/src/main.rs
 
 RUN mkdir utils/src
 RUN echo "fn main() {}" > ./utils/src/main.rs
 
 RUN cargo build
 
-COPY ./api/src ./api/src
-COPY ./api/tests ./api/tests
+COPY ./users/src ./users/src
+COPY ./users/tests ./users/tests
 
 COPY ./utils/src ./utils/src
 

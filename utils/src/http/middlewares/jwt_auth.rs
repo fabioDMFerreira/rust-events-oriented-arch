@@ -5,10 +5,14 @@ use actix_web::error::{Error as ActixError, ErrorUnauthorized};
 use actix_web::{dev::Payload, Error as ActixWebError};
 use actix_web::{http, web, FromRequest, HttpMessage, HttpRequest};
 use jsonwebtoken::{decode, DecodingKey, Validation};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use crate::config::Config;
-use crate::models::token_claims::TokenClaims;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TokenClaims {
+    pub sub: String,
+    pub iat: usize,
+    pub exp: usize,
+}
 
 #[derive(Debug, Serialize)]
 struct ErrorResponse {
@@ -22,6 +26,10 @@ impl fmt::Display for ErrorResponse {
     }
 }
 
+pub trait JwtMiddlewareConfig {
+    fn get_jwt_secret(&self) -> String;
+}
+
 pub struct JwtMiddleware {
     pub user_id: uuid::Uuid,
 }
@@ -30,7 +38,20 @@ impl FromRequest for JwtMiddleware {
     type Error = ActixWebError;
     type Future = Ready<Result<Self, Self::Error>>;
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        let config = req.app_data::<web::Data<Config>>().unwrap();
+        let config_wrapped = req.app_data::<web::Data<dyn JwtMiddlewareConfig>>();
+
+        let json_error = |message: String| -> ActixError {
+            ErrorUnauthorized(ErrorResponse {
+                status: "fail".to_string(),
+                message,
+            })
+        };
+
+        if config_wrapped.is_none() {
+            return ready(Err(json_error("invalid configuration".to_string())));
+        }
+
+        let config = config_wrapped.unwrap();
 
         let token = req
             .cookie("token")
@@ -41,17 +62,10 @@ impl FromRequest for JwtMiddleware {
                     .map(|h| h.to_str().unwrap().split_at(7).1.to_string())
             });
 
-        let json_error = |message: String| -> ActixError {
-            ErrorUnauthorized(ErrorResponse {
-                status: "fail".to_string(),
-                message,
-            })
-        };
-
         if let Some(token) = token {
             if let Ok(claims) = decode::<TokenClaims>(
                 &token,
-                &DecodingKey::from_secret(config.jwt_secret.as_ref()),
+                &DecodingKey::from_secret(config.get_jwt_secret().as_ref()),
                 &Validation::default(),
             )
             .map(|c| c.claims)

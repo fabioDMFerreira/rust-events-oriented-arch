@@ -19,3 +19,10 @@ table! {
       feed_id -> Uuid,
   }
 }
+
+table! {
+  subscriptions (feed_id, user_id) {
+      feed_id -> Uuid,
+      user_id -> Uuid,
+  }
+}

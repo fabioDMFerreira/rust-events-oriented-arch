@@ -15,6 +15,11 @@ export type Feeds = Array<{
   publish_date: string;
 }>;
 
+export type Subscription = {
+  user_id: string;
+  feed_id: string;
+};
+
 class API {
   token: string = '';
 
@@ -85,6 +90,23 @@ class API {
 
   feeds(): Promise<Feeds> {
     return this._doRequest('/feeds') as any;
+  }
+
+  subscriptions(): Promise<Subscription[]> {
+    return this._doRequest('/subscriptions') as any;
+  }
+
+  subscribe(feedId: string): Promise<Subscription> {
+    return this._doRequest('/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify({ feed_id: feedId }),
+    }) as any;
+  }
+
+  unsubscribe(feedId: string): Promise<number> {
+    return this._doRequest(`/subscriptions?feed_id=${feedId}`, {
+      method: 'DELETE',
+    }) as any;
   }
 
   connectWs(onMessage: (event: MessageEvent<any>) => void) {

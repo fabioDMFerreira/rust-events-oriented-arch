@@ -4,12 +4,17 @@ use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::{error::Error as ActixError, web, App as ActixApp, HttpServer};
 use log::info;
+use news::handlers::subscriptions::{create_subscription, delete_subscription, get_subscriptions};
 use news::repositories::feed_repository::FeedDieselRepository;
 use news::repositories::news_repository::NewsDieselRepository;
+use news::repositories::subscription_repository::{
+    SubscriptionRepository, SubscriptionsDieselRepository,
+};
 use std::thread;
 use std::{error::Error, sync::Arc};
 use tokio_cron_scheduler::{Job, JobScheduler};
-use utils::{db::connect_db, http::middlewares::build_server, logger::init_logger};
+use utils::http::middlewares::jwt_auth::JwtMiddlewareConfig;
+use utils::{db::connect_db, http::utils::build_server, logger::init_logger};
 
 use news::{
     app::App,
@@ -31,6 +36,9 @@ async fn main() {
         Arc::new(FeedDieselRepository::new(Arc::new(db_pool.clone())));
     let news_repository: Arc<dyn NewsRepository> =
         Arc::new(NewsDieselRepository::new(Arc::new(db_pool.clone())));
+    let subscription_repository: Arc<dyn SubscriptionRepository> = Arc::new(
+        SubscriptionsDieselRepository::new(Arc::new(db_pool.clone())),
+    );
 
     let app = App::new(feed_repository.clone(), news_repository.clone());
 
@@ -45,7 +53,12 @@ async fn main() {
     info!("Starting API server in port {}", server_port.clone());
 
     let server_result = HttpServer::new(move || {
-        setup_http_server(&config, feed_repository.clone(), news_repository.clone())
+        setup_http_server(
+            &config,
+            feed_repository.clone(),
+            news_repository.clone(),
+            subscription_repository.clone(),
+        )
     })
     .bind(format!("0.0.0.0:{}", server_port.clone()));
 
@@ -85,6 +98,7 @@ fn setup_http_server(
     config: &Config,
     feed_repo: Arc<dyn FeedRepository>,
     news_repo: Arc<dyn NewsRepository>,
+    subscription_repo: Arc<dyn SubscriptionRepository>,
 ) -> ActixApp<
     impl ServiceFactory<
         ServiceRequest,
@@ -94,9 +108,17 @@ fn setup_http_server(
         Error = ActixError,
     >,
 > {
+    let jwt_config: Arc<dyn JwtMiddlewareConfig> = Arc::new(config.clone());
+
     build_server(config.cors_origin.clone())
         .app_data(web::Data::from(feed_repo.clone()))
         .app_data(web::Data::from(news_repo.clone()))
+        .app_data(web::Data::from(subscription_repo.clone()))
+        .app_data(web::Data::new(config.clone()))
+        .app_data(web::Data::from(jwt_config.clone()))
         .service(get_news)
         .service(get_feeds)
+        .service(get_subscriptions)
+        .service(create_subscription)
+        .service(delete_subscription)
 }
