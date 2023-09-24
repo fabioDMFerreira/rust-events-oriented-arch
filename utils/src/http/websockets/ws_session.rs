@@ -6,9 +6,8 @@ use actix::{Actor, AsyncContext, StreamHandler};
 use actix_web_actors::ws;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use log::warn;
-use utils::http::middlewares::jwt_auth::TokenClaims;
 
-use crate::config::Config;
+use crate::http::middlewares::jwt_auth::{JwtMiddlewareConfig, TokenClaims};
 
 use super::ws_server::{Connect, Disconnect, Message, Swap, WebsocketServer};
 
@@ -27,7 +26,7 @@ pub struct WebsocketSession {
 
     pub authenticated: bool,
 
-    pub config: Arc<Config>,
+    pub config: Arc<dyn JwtMiddlewareConfig>,
 }
 
 impl WebsocketSession {
@@ -119,7 +118,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebsocketSession 
                     if let Some(token) = msg.split_once(' ').map(|x| x.1) {
                         match decode::<TokenClaims>(
                             token,
-                            &DecodingKey::from_secret(self.config.jwt_secret.as_ref()),
+                            &DecodingKey::from_secret(self.config.get_jwt_secret().as_ref()),
                             &Validation::default(),
                         ) {
                             Ok(c) => {

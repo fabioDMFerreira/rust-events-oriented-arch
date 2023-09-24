@@ -1,4 +1,3 @@
-use crate::actors::ws_server::{SessionMessage, WebsocketServer};
 use actix::Addr;
 use actix_web::{
     post,
@@ -6,6 +5,7 @@ use actix_web::{
     HttpResponse,
 };
 use serde::{Deserialize, Serialize};
+use utils::http::websockets::ws_server::{SessionMessage, WebsocketServer};
 use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, Validate)]

@@ -26,3 +26,9 @@ table! {
       user_id -> Uuid,
   }
 }
+
+diesel::joinable!(news -> feeds (feed_id));
+
+diesel::joinable!(subscriptions -> feeds (feed_id));
+
+diesel::allow_tables_to_appear_in_same_query!(news, feeds, subscriptions);

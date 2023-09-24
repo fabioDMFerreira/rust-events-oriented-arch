@@ -2703,12 +2703,16 @@ dependencies = [
 name = "utils"
 version = "0.1.0"
 dependencies = [
+ "actix",
  "actix-cors",
  "actix-web",
+ "actix-web-actors",
  "chrono",
  "diesel",
  "env_logger",
  "jsonwebtoken",
+ "log",
+ "rand",
  "rdkafka",
  "serde",
  "serde_json",

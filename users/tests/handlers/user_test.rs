@@ -1,3 +1,4 @@
+use actix::Actor;
 use actix_web::http::StatusCode;
 use actix_web::test;
 use serde::Deserialize;
@@ -5,6 +6,7 @@ use serde_json::from_slice;
 use users::app::setup_app;
 use users::config::Config;
 use users::handlers::user::CreateUserPayload;
+use utils::http::websockets::ws_server::WebsocketServer;
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 struct UserResponse {
@@ -18,7 +20,9 @@ type UsersListResponse = Vec<UserResponse>;
 async fn user_create() {
     let config = Config::init();
 
-    let app = setup_app(&config);
+    let ws_server = WebsocketServer::new().start();
+
+    let app = setup_app(&config, ws_server.clone());
 
     let mut app_server = test::init_service(app).await;
 

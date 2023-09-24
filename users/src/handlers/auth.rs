@@ -22,7 +22,7 @@ pub struct LoginPayload {
 }
 
 #[get("/auth/logout")]
-pub async fn logout_handler(_: JwtMiddleware) -> impl Responder {
+pub async fn logout_handler() -> impl Responder {
     let cookie = Cookie::build("token", "")
         .path("/")
         .max_age(ActixWebDuration::new(-1, 0))

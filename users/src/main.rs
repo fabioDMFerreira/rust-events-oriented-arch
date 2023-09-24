@@ -1,9 +1,11 @@
 #[macro_use]
 extern crate log;
 
+use actix::Actor;
 use actix_web::HttpServer;
 use users::app;
 use users::config::Config;
+use utils::http::websockets::ws_server::WebsocketServer;
 use utils::logger::init_logger;
 
 #[actix_web::main]
@@ -17,7 +19,9 @@ async fn main() -> std::io::Result<()> {
     // http server
     info!("Starting API server in port {}", config.server_port.clone());
 
-    HttpServer::new(move || app::setup_app(&config))
+    let ws_server = WebsocketServer::new().start();
+
+    HttpServer::new(move || app::setup_app(&config, ws_server.clone()))
         .bind(format!("0.0.0.0:{}", server_port))?
         .run()
         .await

@@ -114,9 +114,10 @@ impl Scrapper {
     async fn scrap(rss_feed: &RssFeed) -> Result<Feed, CommonError> {
         let xml = http_request(rss_feed.url.clone()).await?;
 
-        let feed = parser::parse(xml.reader()).unwrap();
-
-        Ok(feed)
+        parser::parse(xml.reader()).map_err(|err| CommonError {
+            message: err.to_string(),
+            code: 3,
+        })
     }
 }
 

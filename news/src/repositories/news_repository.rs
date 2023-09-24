@@ -7,11 +7,12 @@ use utils::error::DatabaseError;
 use uuid::Uuid;
 
 use crate::models::news::News;
-use crate::schema::news;
+use crate::schema::{feeds, news, subscriptions};
 
 #[automock]
 pub trait NewsRepository: Send + Sync {
     fn list(&self) -> Result<Vec<News>, DatabaseError>;
+    fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<News>, DatabaseError>;
     fn find_by_id(&self, news_id: Uuid) -> Result<Option<News>, DatabaseError>;
     fn find_by_fields(
         &self,
@@ -85,6 +86,20 @@ impl NewsRepository for NewsDieselRepository {
         let mut conn = self.pool.get().unwrap();
 
         news::table
+            .load::<News>(&mut conn)
+            .map_err(|err| DatabaseError {
+                message: err.to_string(),
+            })
+    }
+
+    fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<News>, DatabaseError> {
+        let mut conn = self.pool.get().unwrap();
+
+        news::table
+            .inner_join(feeds::table.inner_join(subscriptions::table))
+            .select(News::as_select())
+            .filter(subscriptions::user_id.eq(user_id))
+            .order(news::publish_date.desc())
             .load::<News>(&mut conn)
             .map_err(|err| DatabaseError {
                 message: err.to_string(),

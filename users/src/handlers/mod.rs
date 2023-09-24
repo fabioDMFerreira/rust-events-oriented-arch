@@ -3,4 +3,3 @@ pub mod health;
 pub mod index;
 pub mod message;
 pub mod user;
-pub mod ws;

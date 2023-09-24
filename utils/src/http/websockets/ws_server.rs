@@ -4,7 +4,7 @@ use actix::prelude::*;
 use actix::Actor;
 use log::debug;
 use log::warn;
-use rand::{self, rngs::ThreadRng, Rng};
+use rand::{rngs::ThreadRng, Rng};
 
 #[derive(Message)]
 #[rtype(result = "()")]

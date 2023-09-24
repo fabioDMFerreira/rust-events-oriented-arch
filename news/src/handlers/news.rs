@@ -1,12 +1,19 @@
-use actix_web::{get, web, HttpResponse};
+use actix_web::HttpMessage;
+use actix_web::{get, web, HttpRequest, HttpResponse};
 use log::error;
-use utils::error::CommonError;
+use utils::{error::CommonError, http::middlewares::jwt_auth::JwtMiddleware};
 
 use crate::repositories::news_repository::NewsRepository;
 
 #[get("/news")]
-async fn get_news(news_repo: web::Data<dyn NewsRepository>) -> HttpResponse {
-    let result = news_repo.list();
+async fn get_news(
+    r: HttpRequest,
+    news_repo: web::Data<dyn NewsRepository>,
+    _: JwtMiddleware,
+) -> HttpResponse {
+    let user_id = *r.extensions().get::<uuid::Uuid>().unwrap();
+
+    let result = news_repo.find_by_user_id(user_id);
 
     match result {
         Err(err) => {

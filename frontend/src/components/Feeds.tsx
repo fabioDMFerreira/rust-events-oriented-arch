@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import api, { Feeds, Subscription } from '../services/api';
+import api, { Feeds, News, Subscription } from '../services/api';
 
 const FeedsComponent = () => {
   const [feeds, setFeeds] = useState<Feeds>();
   const [subscriptions, setSubscriptions] = useState<{
     [key: string]: boolean;
   }>({});
+  const [news, setNews] = useState<News[]>();
 
   useEffect(() => {
     api.feeds().then(setFeeds).catch(console.log);
@@ -21,6 +22,10 @@ const FeedsComponent = () => {
       })
       .catch(console.log);
   }, []);
+
+  useEffect(() => {
+    api.news().then(setNews).catch(console.log);
+  }, [subscriptions]);
 
   const subscribe = useCallback(
     (feedId: string) => {
@@ -73,6 +78,20 @@ const FeedsComponent = () => {
             );
           })
         : 'No feeds'}
+      <div>
+        <h2>News</h2>
+        <div>
+          {news
+            ? news.map((news) => {
+                return (
+                  <p>
+                    {news.title} ({news.author}) {news.publish_date}
+                  </p>
+                );
+              })
+            : 'No news'}
+        </div>
+      </div>
     </>
   );
 };

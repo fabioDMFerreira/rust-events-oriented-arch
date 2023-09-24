@@ -53,9 +53,10 @@ module.exports = function (app) {
       })
     )
     .use(
-      '/ws',
+      '/connect-ws',
       createProxyMiddleware({
-        target: 'ws://users:8000',
+        ws: true,
+        target: 'http://users:8000',
         changeOrigin: true,
       })
     );

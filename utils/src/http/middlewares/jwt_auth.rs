@@ -26,7 +26,7 @@ impl fmt::Display for ErrorResponse {
     }
 }
 
-pub trait JwtMiddlewareConfig {
+pub trait JwtMiddlewareConfig: Send + Sync {
     fn get_jwt_secret(&self) -> String;
 }
 

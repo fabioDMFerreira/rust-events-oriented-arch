@@ -1,10 +1,23 @@
+use crate::models::feed::Feed;
 use crate::schema::news;
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use utils::serializer::serde_naive_date;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable, PartialEq)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    Selectable,
+    Queryable,
+    Insertable,
+    PartialEq,
+    Identifiable,
+    Associations,
+)]
+#[diesel(belongs_to(Feed))]
 #[diesel(table_name = news)]
 pub struct News {
     pub id: uuid::Uuid,

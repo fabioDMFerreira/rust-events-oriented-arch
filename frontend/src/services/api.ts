@@ -20,6 +20,14 @@ export type Subscription = {
   feed_id: string;
 };
 
+export type News = {
+  title: string;
+  author: string;
+  url: string;
+  publish_date: string;
+  feed_id: string;
+};
+
 class API {
   token: string = '';
 
@@ -38,6 +46,8 @@ class API {
       if (resp.status >= 200 && resp.status < 300) {
         const json = await resp.json();
         return json;
+      } else if (resp.status === 401) {
+        this._saveToken('');
       }
       const err = await resp.text();
       throw new Error(err);
@@ -92,6 +102,10 @@ class API {
     return this._doRequest('/feeds') as any;
   }
 
+  news(): Promise<News[]> {
+    return this._doRequest('/news') as any;
+  }
+
   subscriptions(): Promise<Subscription[]> {
     return this._doRequest('/subscriptions') as any;
   }
@@ -110,8 +124,8 @@ class API {
   }
 
   connectWs(onMessage: (event: MessageEvent<any>) => void) {
-    // const socket = new WebSocket('ws://localhost:8000/ws');
-    const socket = new WebSocket(`ws://${window.location.host}/ws`);
+    const socket = new WebSocket('ws://localhost:8000/connect-ws');
+    // const socket = new WebSocket(`ws://${window.location.host}/connect-ws`);
 
     let interval: string | number | NodeJS.Timer | undefined;
 
@@ -129,11 +143,11 @@ class API {
 
     socket.onclose = () => {
       console.log('WebSocket connection closed.');
+      clearInterval(interval);
     };
 
     return () => {
       socket.close();
-      clearInterval(interval);
     };
   }
 }
