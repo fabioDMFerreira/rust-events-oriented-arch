@@ -3,15 +3,10 @@ use actix_web::{
     get, post, web, HttpMessage, HttpRequest, HttpResponse, Responder,
 };
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
-use chrono::{Duration, Utc};
-use jsonwebtoken::{encode, EncodingKey, Header};
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use utils::http::{
-    middlewares::jwt_auth::{JwtMiddleware, TokenClaims},
-    services::auth_service::AuthService,
-};
+use utils::http::{middlewares::jwt_auth::JwtMiddleware, services::auth_service::AuthService};
 use validator::Validate;
 
 use crate::{config::Config, services::user_service::UserService};

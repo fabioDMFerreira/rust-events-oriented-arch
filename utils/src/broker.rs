@@ -29,7 +29,7 @@ pub async fn send_message_to_topic(
     producer
         .send(
             FutureRecord::to(topic.as_str())
-                .payload(&format!("{}", message))
+                .payload(&message)
                 .key(topic.as_str())
                 .headers(OwnedHeaders::new()),
             Duration::from_secs(120),
