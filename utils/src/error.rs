@@ -1,8 +1,9 @@
 use serde::Serialize;
 
-const DATABASE_ERROR_CODE: u32 = 1;
-const BROKER_ERROR_CODE: u32 = 2;
-const HTTP_ERROR_CODE: u32 = 3;
+pub const DATABASE_ERROR_CODE: u32 = 1;
+pub const BROKER_ERROR_CODE: u32 = 2;
+pub const HTTP_ERROR_CODE: u32 = 3;
+pub const AUTH_TOKEN_ENCODING_CODE: u32 = 4;
 
 #[derive(Debug, Serialize, Clone, PartialEq)]
 pub struct CommonError {

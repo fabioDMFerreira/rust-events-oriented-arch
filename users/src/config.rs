@@ -1,5 +1,3 @@
-use utils::http::middlewares::jwt_auth::JwtMiddlewareConfig;
-
 #[derive(Debug, Clone)]
 pub struct Config {
     pub database_url: String,
@@ -10,12 +8,6 @@ pub struct Config {
     pub server_port: String,
     pub cors_origin: String,
     pub logs_path: String,
-}
-
-impl JwtMiddlewareConfig for Config {
-    fn get_jwt_secret(&self) -> String {
-        return self.jwt_secret.clone();
-    }
 }
 
 impl Config {

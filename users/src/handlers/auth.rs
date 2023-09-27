@@ -8,7 +8,10 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use utils::http::middlewares::jwt_auth::{JwtMiddleware, TokenClaims};
+use utils::http::{
+    middlewares::jwt_auth::{JwtMiddleware, TokenClaims},
+    services::auth_service::AuthService,
+};
 use validator::Validate;
 
 use crate::{config::Config, services::user_service::UserService};
@@ -37,6 +40,7 @@ pub async fn logout_handler() -> impl Responder {
 #[post("/auth/login")]
 pub async fn login_handler(
     user_service: web::Data<dyn UserService>,
+    auth_service: web::Data<dyn AuthService>,
     config: web::Data<Config>,
     payload: Option<web::Json<LoginPayload>>,
 ) -> HttpResponse {
@@ -72,31 +76,23 @@ pub async fn login_handler(
             .json(json!({"status": "fail", "message": "Invalid password"}));
     }
 
-    let now = Utc::now();
-    let iat = now.timestamp() as usize;
-    let exp = (now + Duration::minutes(config.jwt_expires_in)).timestamp() as usize;
-    let claims: TokenClaims = TokenClaims {
-        sub: user.id.to_string(),
-        exp,
-        iat,
-    };
+    match auth_service.encode_token(user.id.to_string(), config.jwt_expires_in) {
+        Ok(token) => {
+            let cookie = Cookie::build("token", token.to_owned())
+                .path("/")
+                .max_age(ActixWebDuration::new(config.jwt_max_age, 0))
+                .http_only(true)
+                .finish();
 
-    let token = encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret(config.jwt_secret.as_ref()),
-    )
-    .unwrap();
-
-    let cookie = Cookie::build("token", token.to_owned())
-        .path("/")
-        .max_age(ActixWebDuration::new(config.jwt_max_age, 0))
-        .http_only(true)
-        .finish();
-
-    return HttpResponse::Ok()
-        .cookie(cookie)
-        .json(json!({"status": "success", "token": token}));
+            HttpResponse::Ok()
+                .cookie(cookie)
+                .json(json!({"status": "success", "token": token}))
+        }
+        Err(err) => {
+            error!("failed encoding auth token: {}", err);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
 }
 
 #[get("/auth/me")]

@@ -33,3 +33,5 @@ validator = { version = "0.16.1", features = ["derive"] }
 actix = "0.13.1"
 actix-web-actors = "4.2.0"
 rdkafka = "0.34.0"
+rstest = "0.18.2"
+actix-http = "3.4.0"

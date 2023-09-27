@@ -16,7 +16,7 @@ use std::thread;
 use std::{error::Error, sync::Arc};
 use tokio_cron_scheduler::{Job, JobScheduler};
 use utils::broker::{self};
-use utils::http::middlewares::jwt_auth::JwtMiddlewareConfig;
+use utils::http::services::auth_service::JwtAuthService;
 use utils::http::websockets::ws_handler::get_ws;
 use utils::http::websockets::ws_server::WebsocketServer;
 use utils::{db::connect_db, http::utils::build_server, logger::init_logger};
@@ -131,7 +131,8 @@ fn setup_http_server(
         Error = ActixError,
     >,
 > {
-    let jwt_config: Arc<dyn JwtMiddlewareConfig> = Arc::new(config.clone());
+    let jwt_config = Arc::new(config.clone());
+    let auth_service = Arc::new(JwtAuthService::new(config.jwt_secret.clone()));
 
     build_server(config.cors_origin.clone())
         .app_data(web::Data::from(feed_repo.clone()))
@@ -140,6 +141,7 @@ fn setup_http_server(
         .app_data(web::Data::new(config.clone()))
         .app_data(web::Data::from(jwt_config.clone()))
         .app_data(web::Data::new(ws_server.clone()))
+        .app_data(web::Data::new(auth_service))
         .service(get_news)
         .service(get_feeds)
         .service(get_subscriptions)

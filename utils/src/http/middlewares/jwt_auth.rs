@@ -4,8 +4,9 @@ use std::future::{ready, Ready};
 use actix_web::error::{Error as ActixError, ErrorUnauthorized};
 use actix_web::{dev::Payload, Error as ActixWebError};
 use actix_web::{http, web, FromRequest, HttpMessage, HttpRequest};
-use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
+
+use crate::http::services::auth_service::AuthService;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenClaims {
@@ -26,10 +27,6 @@ impl fmt::Display for ErrorResponse {
     }
 }
 
-pub trait JwtMiddlewareConfig: Send + Sync {
-    fn get_jwt_secret(&self) -> String;
-}
-
 pub struct JwtMiddleware {
     pub user_id: uuid::Uuid,
 }
@@ -38,7 +35,7 @@ impl FromRequest for JwtMiddleware {
     type Error = ActixWebError;
     type Future = Ready<Result<Self, Self::Error>>;
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        let config_wrapped = req.app_data::<web::Data<dyn JwtMiddlewareConfig>>();
+        let auth_service = req.app_data::<web::Data<dyn AuthService>>();
 
         let json_error = |message: String| -> ActixError {
             ErrorUnauthorized(ErrorResponse {
@@ -47,11 +44,11 @@ impl FromRequest for JwtMiddleware {
             })
         };
 
-        if config_wrapped.is_none() {
+        if auth_service.is_none() {
             return ready(Err(json_error("invalid configuration".to_string())));
         }
 
-        let config = config_wrapped.unwrap();
+        let auth_service = auth_service.unwrap();
 
         let token = req
             .cookie("token")
@@ -63,13 +60,7 @@ impl FromRequest for JwtMiddleware {
             });
 
         if let Some(token) = token {
-            if let Ok(claims) = decode::<TokenClaims>(
-                &token,
-                &DecodingKey::from_secret(config.get_jwt_secret().as_ref()),
-                &Validation::default(),
-            )
-            .map(|c| c.claims)
-            {
+            if let Ok(claims) = auth_service.decode_token(token) {
                 let user_id = uuid::Uuid::parse_str(&claims.sub).unwrap();
                 req.extensions_mut()
                     .insert::<uuid::Uuid>(user_id.to_owned());

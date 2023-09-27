@@ -102,3 +102,223 @@ async fn delete_subscription(
         HttpResponse::BadRequest().body("Missing 'feed_id' query parameter")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::http::StatusCode;
+    use actix_web::{test, web, App};
+    use rstest::*;
+    use std::str::FromStr;
+    use std::sync::Arc;
+    use utils::error::DatabaseError;
+    use utils::http::services::auth_service::{AuthService, JwtAuthService};
+    use utils::http::test_utils::HttpTestCase;
+    use uuid::Uuid;
+
+    use crate::repositories::subscription_repository::MockSubscriptionRepository;
+
+    struct GetSubscriptionsTestCase {
+        http_case: HttpTestCase,
+        service_result: Result<Vec<Subscription>, DatabaseError>,
+    }
+
+    #[rstest]
+    #[case(GetSubscriptionsTestCase {
+        http_case: HttpTestCase {
+            expected_status: StatusCode::OK,
+            expected_body: r#"[{"feed_id":"fdd0a6f3-af61-4760-a789-5b6dd16eb7dc","user_id":"b73ccd26-1832-4d10-9251-271ce453cee3"},{"feed_id":"fdd0a6f3-af61-4760-a789-5b6dd16eb7dc","user_id":"b73ccd26-1832-4d10-9251-271ce453cee3"}]"#,
+        },
+        service_result: Ok(vec![
+            Subscription {
+                feed_id: Uuid::from_str("fdd0a6f3-af61-4760-a789-5b6dd16eb7dc").unwrap(),
+                user_id: Uuid::from_str("b73ccd26-1832-4d10-9251-271ce453cee3").unwrap(),
+            },
+            Subscription {
+                feed_id: Uuid::from_str("fdd0a6f3-af61-4760-a789-5b6dd16eb7dc").unwrap(),
+                user_id: Uuid::from_str("b73ccd26-1832-4d10-9251-271ce453cee3").unwrap(),
+            },
+        ])
+    })]
+    #[case(GetSubscriptionsTestCase {
+        http_case : HttpTestCase {
+            expected_status: StatusCode::INTERNAL_SERVER_ERROR,
+            expected_body: r#""#,
+        },
+        service_result: Err(DatabaseError { message: "db is down".to_owned() })
+    })]
+    #[actix_rt::test]
+    async fn test_get_subscriptions(#[case] case: GetSubscriptionsTestCase) {
+        let mut subscriptions_repo = MockSubscriptionRepository::new();
+        let auth_service: Arc<dyn AuthService> =
+            Arc::new(JwtAuthService::new("secret123".to_owned()));
+
+        let service_result = case.service_result.clone();
+
+        subscriptions_repo
+            .expect_list_by_user()
+            .returning(move |_| service_result.clone());
+
+        let subscriptions_repo: Arc<dyn SubscriptionRepository> = Arc::new(subscriptions_repo);
+
+        // Create a test App
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::from(subscriptions_repo))
+                .app_data(web::Data::from(auth_service.clone()))
+                .service(web::scope("").service(get_subscriptions)),
+        )
+        .await;
+
+        case.http_case
+            .execute(
+                test::TestRequest::get().uri("/subscriptions"),
+                &app,
+                Some(auth_service.clone()),
+            )
+            .await;
+    }
+
+    struct CreateSubscriptionTestCase {
+        http_case: HttpTestCase,
+        service_result: Result<Subscription, DatabaseError>,
+        request_payload: Option<CreateSubscriptionPayload>,
+    }
+
+    #[rstest]
+    #[case(CreateSubscriptionTestCase {
+        http_case: HttpTestCase {
+            expected_status: StatusCode::OK,
+            expected_body: r#"{"feed_id":"fdd0a6f3-af61-4760-a789-5b6dd16eb7dc","user_id":"b73ccd26-1832-4d10-9251-271ce453cee3"}"#,
+        },
+        service_result: Ok(
+            Subscription {
+                feed_id: Uuid::from_str("fdd0a6f3-af61-4760-a789-5b6dd16eb7dc").unwrap(),
+                user_id: Uuid::from_str("b73ccd26-1832-4d10-9251-271ce453cee3").unwrap(),
+            }
+        ),
+        request_payload: Some(CreateSubscriptionPayload{
+            feed_id:Some("fdd0a6f3-af61-4760-a789-5b6dd16eb7dc".to_owned()),
+        })
+    })]
+    #[case(CreateSubscriptionTestCase {
+        http_case : HttpTestCase {
+            expected_status: StatusCode::BAD_REQUEST,
+            expected_body: r#"empty body"#,
+        },
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
+        request_payload: None
+    })]
+    #[case(CreateSubscriptionTestCase {
+        http_case : HttpTestCase {
+            expected_status: StatusCode::INTERNAL_SERVER_ERROR,
+            expected_body: r#""#,
+        },
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
+        request_payload: Some(CreateSubscriptionPayload{
+            feed_id:Some("fdd0a6f3-af61-4760-a789-5b6dd16eb7dc".to_owned()),
+        })
+    })]
+    #[actix_rt::test]
+    async fn test_create_subscriptions(#[case] case: CreateSubscriptionTestCase) {
+        let mut subscriptions_repo = MockSubscriptionRepository::new();
+        let auth_service: Arc<dyn AuthService> =
+            Arc::new(JwtAuthService::new("secret123".to_owned()));
+
+        let service_result = case.service_result.clone();
+
+        subscriptions_repo
+            .expect_create()
+            .returning(move |_| service_result.clone());
+
+        let subscriptions_repo: Arc<dyn SubscriptionRepository> = Arc::new(subscriptions_repo);
+
+        // Create a test App
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::from(subscriptions_repo))
+                .app_data(web::Data::from(auth_service.clone()))
+                .service(web::scope("").service(create_subscription)),
+        )
+        .await;
+
+        let mut req = test::TestRequest::post().uri("/subscriptions");
+
+        if let Some(payload) = case.request_payload {
+            req = req
+                .set_payload(serde_json::to_vec(&payload).unwrap())
+                .insert_header(("content-type", "application/json"))
+        }
+
+        case.http_case
+            .execute(req, &app, Some(auth_service.clone()))
+            .await;
+    }
+
+    struct DeleteSubscriptionTestCase {
+        http_case: HttpTestCase,
+        service_result: Result<usize, DatabaseError>,
+        feed_id: Option<String>,
+    }
+
+    #[rstest]
+    #[case(DeleteSubscriptionTestCase {
+        http_case: HttpTestCase {
+            expected_status: StatusCode::OK,
+            expected_body: r#"1"#,
+        },
+        service_result: Ok(1),
+        feed_id: Some("fdd0a6f3-af61-4760-a789-5b6dd16eb7dc".to_owned()),
+    })]
+    #[case(DeleteSubscriptionTestCase {
+        http_case : HttpTestCase {
+            expected_status: StatusCode::BAD_REQUEST,
+            expected_body: r#"Missing 'feed_id' query parameter"#,
+        },
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
+        feed_id: None
+    })]
+    #[case(DeleteSubscriptionTestCase {
+        http_case : HttpTestCase {
+            expected_status: StatusCode::INTERNAL_SERVER_ERROR,
+            expected_body: r#""#,
+        },
+        service_result: Err(DatabaseError { message: "db is down".to_owned() }),
+        feed_id: Some("fdd0a6f3-af61-4760-a789-5b6dd16eb7dc".to_owned()),
+    })]
+    #[actix_rt::test]
+    async fn test_delete_subscriptions(#[case] case: DeleteSubscriptionTestCase) {
+        let mut subscriptions_repo = MockSubscriptionRepository::new();
+        let auth_service: Arc<dyn AuthService> =
+            Arc::new(JwtAuthService::new("secret123".to_owned()));
+
+        let service_result = case.service_result.clone();
+
+        subscriptions_repo
+            .expect_delete()
+            .returning(move |_, _| service_result.clone());
+
+        let subscriptions_repo: Arc<dyn SubscriptionRepository> = Arc::new(subscriptions_repo);
+
+        // Create a test App
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::from(subscriptions_repo))
+                .app_data(web::Data::from(auth_service.clone()))
+                .service(web::scope("").service(delete_subscription)),
+        )
+        .await;
+
+        let mut uri = "/subscriptions".to_owned();
+
+        if let Some(feed_id) = case.feed_id {
+            uri = format!("{}?feed_id={}", uri.to_string(), feed_id.to_string());
+        }
+
+        let req = test::TestRequest::delete().uri(&uri);
+
+        case.http_case
+            .execute(req, &app, Some(auth_service.clone()))
+            .await;
+    }
+}

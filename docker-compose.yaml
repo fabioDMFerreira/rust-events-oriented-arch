@@ -131,22 +131,6 @@ services:
       postgres:
         condition: service_healthy
 
-  consumer:
-    build:
-      context: .
-      dockerfile: ./consumer/Dockerfile.dev
-    volumes:
-      - ./consumer/src:/app/consumer/src
-      - ./utils/src:/app/utils/src
-      - ./logs/consumer:/var/log/app
-    environment:
-      KAFKA_URL: kafka:29092
-      LOGS_PATH: /var/log/app/stdout.log
-      RUST_LOG: debug
-    depends_on:
-      kafka:
-        condition: service_healthy
-
   frontend:
     container_name: frontend
     build:

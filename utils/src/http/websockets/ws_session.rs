@@ -4,10 +4,9 @@ use std::time::{Duration, Instant};
 use actix::prelude::*;
 use actix::{Actor, AsyncContext, StreamHandler};
 use actix_web_actors::ws;
-use jsonwebtoken::{decode, DecodingKey, Validation};
 use log::warn;
 
-use crate::http::middlewares::jwt_auth::{JwtMiddlewareConfig, TokenClaims};
+use crate::http::services::auth_service::AuthService;
 
 use super::ws_server::{Connect, Disconnect, Message, Swap, WebsocketServer};
 
@@ -26,7 +25,7 @@ pub struct WebsocketSession {
 
     pub authenticated: bool,
 
-    pub config: Arc<dyn JwtMiddlewareConfig>,
+    pub auth_service: Arc<dyn AuthService>,
 }
 
 impl WebsocketSession {
@@ -116,13 +115,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebsocketSession 
                     // if there is a token after the command /login check whether the token is valid
                     // if token is valid set the session as authenticated and set the session id with the user id
                     if let Some(token) = msg.split_once(' ').map(|x| x.1) {
-                        match decode::<TokenClaims>(
-                            token,
-                            &DecodingKey::from_secret(self.config.get_jwt_secret().as_ref()),
-                            &Validation::default(),
-                        ) {
+                        match self.auth_service.decode_token(token.to_owned()) {
                             Ok(c) => {
-                                let new_id = c.claims.sub.to_string();
+                                let new_id = c.sub.to_string();
                                 self.addr.do_send(Swap {
                                     id: self.id.clone(),
                                     new_id: new_id.clone(),
