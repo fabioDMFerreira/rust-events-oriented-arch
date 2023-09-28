@@ -30,9 +30,7 @@ impl<'a> Processor for NewsWebsocketProcessor<'a> {
     async fn process(&self, payload: &str) -> Result<(), CommonError> {
         info!("Received message: {}", payload);
         let news: News = serde_json::from_str(payload).map_err(|err| {
-            SerializationError::new(
-                format!("Failed to convert JSON string: {}", err.to_string()).as_str(),
-            )
+            SerializationError::new(format!("failed to convert JSON string: {}", err).as_str())
         })?;
 
         match self.subscription_repo.list_by_feed(news.feed_id) {
@@ -139,7 +137,7 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
-            "Error: Failed to convert JSON string: expected value at line 1 column 1, Code: 6"
+            "Error: failed to convert JSON string: expected value at line 1 column 1, Code: 6"
         );
     }
 
