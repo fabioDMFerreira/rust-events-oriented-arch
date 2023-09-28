@@ -23,6 +23,7 @@ test:
 build-prod:
 	docker build -t ffff/rust-users-prod -f ./docker.prod/Dockerfile.users  .
 	docker build -t ffff/rust-news-prod -f ./docker.prod/Dockerfile.news  .
+	docker build -t ffff/rust-news-scrapper-prod -f ./docker.prod/Dockerfile.news-scrapper  .
 	docker build -t ffff/rust-fe-prod -f ./docker.prod/Dockerfile.fe  .
 	docker build -t ffff/rust-users-migrations-prod -f ./docker.prod/Dockerfile.users-migrations  .
 	docker build -t ffff/rust-news-migrations-prod -f ./docker.prod/Dockerfile.news-migrations  .

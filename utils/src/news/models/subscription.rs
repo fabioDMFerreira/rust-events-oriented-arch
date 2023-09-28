@@ -1,5 +1,5 @@
-use crate::models::feed::Feed;
-use crate::schema::subscriptions;
+use crate::news::models::feed::Feed;
+use crate::news::schema::subscriptions;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 

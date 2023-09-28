@@ -43,7 +43,7 @@ async fn user_repo() {
 
     // user_id does not exist
     let result = user_repo.get_by_id(Uuid::new_v4()).await;
-    assert_eq!(result.is_err(), true);
+    assert!(result.is_err());
     if let Err(err) = result {
         assert_eq!(err.message, String::from("NotFound"));
     }

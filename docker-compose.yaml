@@ -120,6 +120,27 @@ services:
       news-migrations:
         condition: service_completed_successfully
 
+  news-scrapper:
+    build:
+      context: .
+      dockerfile: ./news-scrapper/Dockerfile.dev
+    volumes:
+      - ./news-scrapper/src:/app/news-scrapper/src
+      - ./utils/src:/app/utils/src
+      - ./logs/news-scrapper:/var/log/app
+    environment:
+      DATABASE_URL: "postgres://myuser:mypassword@postgres:5432/mydb?options=-c%20search_path%3Dnews"
+      LOGS_PATH: /var/log/app/stdout.log
+      RUST_LOG: debug
+      KAFKA_URL: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      news-migrations:
+        condition: service_completed_successfully
+
   news-migrations:
     build:
       context: ./news

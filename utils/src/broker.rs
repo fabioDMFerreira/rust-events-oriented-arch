@@ -23,14 +23,14 @@ pub fn create_producer(kafka_url: String) -> KafkaProducer {
 
 pub async fn send_message_to_topic(
     producer: KafkaProducer,
-    topic: String,
+    topic: &str,
     message: String,
 ) -> Result<(i32, i64), (KafkaError, OwnedMessage)> {
     producer
         .send(
-            FutureRecord::to(topic.as_str())
+            FutureRecord::to(topic)
                 .payload(&message)
-                .key(topic.as_str())
+                .key(topic)
                 .headers(OwnedHeaders::new()),
             Duration::from_secs(120),
         )

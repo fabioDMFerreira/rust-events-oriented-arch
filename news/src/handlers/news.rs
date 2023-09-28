@@ -3,7 +3,7 @@ use actix_web::{get, web, HttpRequest, HttpResponse};
 use log::error;
 use utils::{error::CommonError, http::middlewares::jwt_auth::JwtMiddleware};
 
-use crate::repositories::news_repository::NewsRepository;
+use utils::news::repositories::news_repository::NewsRepository;
 
 #[get("/news")]
 async fn get_news(
@@ -38,8 +38,8 @@ mod tests {
     use utils::http::test_utils::HttpTestCase;
     use uuid::Uuid;
 
-    use crate::models::news::News;
-    use crate::repositories::news_repository::MockNewsRepository;
+    use utils::news::models::news::News;
+    use utils::news::repositories::news_repository::MockNewsRepository;
 
     struct GetNewsTestCase {
         pub service_result: Result<Vec<News>, DatabaseError>,

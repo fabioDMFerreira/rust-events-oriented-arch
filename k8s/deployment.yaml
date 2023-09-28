@@ -182,3 +182,29 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: news-scrapper-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: news-scrapper
+  template:
+    metadata:
+      labels:
+        app: news-scrapper
+    spec:
+      containers:
+        - name: news-scrapper-container
+          image: ffff/rust-news-scrapper-prod
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DATABASE_URL
+              value: 'postgres://myuser:mypassword@postgres-service:5432/mydb?options=-c%20search_path%3Dnews'
+            - name: KAFKA_URL
+              value: 'kafka-service:9092'
+            - name: RUST_LOG
+              value: 'debug'

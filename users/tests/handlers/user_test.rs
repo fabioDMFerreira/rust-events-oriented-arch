@@ -24,7 +24,7 @@ async fn user_create() {
 
     let app = setup_app(&config, ws_server.clone());
 
-    let mut app_server = test::init_service(app).await;
+    let app_server = test::init_service(app).await;
 
     let req = test::TestRequest::post()
         .uri("/users")
@@ -37,7 +37,7 @@ async fn user_create() {
             .unwrap(),
         )
         .to_request();
-    let resp = test::call_service(&mut app_server, req).await;
+    let resp = test::call_service(&app_server, req).await;
 
     assert_eq!(resp.status(), StatusCode::OK);
 
@@ -61,7 +61,7 @@ async fn user_create() {
             .unwrap(),
         )
         .to_request();
-    let resp = test::call_service(&mut app_server, req).await;
+    let resp = test::call_service(&app_server, req).await;
 
     assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
     let body = test::read_body(resp).await;
@@ -69,7 +69,7 @@ async fn user_create() {
 
     // get list of users
     let req = test::TestRequest::get().uri("/users").to_request();
-    let resp = test::call_service(&mut app_server, req).await;
+    let resp = test::call_service(&app_server, req).await;
 
     assert_eq!(resp.status(), StatusCode::OK);
     let body = test::read_body(resp).await;
@@ -80,7 +80,7 @@ async fn user_create() {
     let req = test::TestRequest::delete()
         .uri(format!("/users/{}", user.id).as_str())
         .to_request();
-    let resp = test::call_service(&mut app_server, req).await;
+    let resp = test::call_service(&app_server, req).await;
 
     assert_eq!(resp.status(), StatusCode::OK);
     let body = test::read_body(resp).await;
@@ -88,7 +88,7 @@ async fn user_create() {
 
     // get empty list of users
     let req = test::TestRequest::get().uri("/users").to_request();
-    let resp = test::call_service(&mut app_server, req).await;
+    let resp = test::call_service(&app_server, req).await;
 
     assert_eq!(resp.status(), StatusCode::OK);
     let body = test::read_body(resp).await;

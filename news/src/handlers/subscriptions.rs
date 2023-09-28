@@ -7,8 +7,8 @@ use utils::{error::CommonError, http::middlewares::jwt_auth::JwtMiddleware};
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::models::subscription::Subscription;
-use crate::repositories::subscription_repository::SubscriptionRepository;
+use utils::news::models::subscription::Subscription;
+use utils::news::repositories::subscription_repository::SubscriptionRepository;
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct CreateSubscriptionPayload {
@@ -116,7 +116,7 @@ mod tests {
     use utils::http::test_utils::HttpTestCase;
     use uuid::Uuid;
 
-    use crate::repositories::subscription_repository::MockSubscriptionRepository;
+    use utils::news::repositories::subscription_repository::MockSubscriptionRepository;
 
     struct GetSubscriptionsTestCase {
         http_case: HttpTestCase,

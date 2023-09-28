@@ -4,7 +4,7 @@ use actix::Addr;
 use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::{error::Error, web, App};
-use utils::http::services::auth_service::JwtAuthService;
+use utils::http::services::auth_service::{AuthService, JwtAuthService};
 use utils::http::websockets::ws_handler::get_ws;
 use utils::http::websockets::ws_server::WebsocketServer;
 use utils::{broker, db, http::utils::build_server};
@@ -42,7 +42,8 @@ pub fn setup_app(
     let events_service = Arc::new(KafkaEventService::new(kafka_producer.clone()));
     let user_service: Arc<dyn UserService> =
         Arc::new(UserServiceImpl::new(user_repo, events_service));
-    let auth_service = Arc::new(JwtAuthService::new(config.jwt_secret.clone()));
+    let auth_service: Arc<dyn AuthService> =
+        Arc::new(JwtAuthService::new(config.jwt_secret.clone()));
 
     let jwt_config = Arc::new(config.clone());
 
@@ -52,7 +53,7 @@ pub fn setup_app(
         .app_data(web::Data::new(ws_server.clone()))
         .app_data(web::Data::new(config.clone()))
         .app_data(web::Data::from(jwt_config.clone()))
-        .app_data(web::Data::new(auth_service))
+        .app_data(web::Data::from(auth_service.clone()))
         .service(get_index)
         .service(get_health)
         .service(get_ws)

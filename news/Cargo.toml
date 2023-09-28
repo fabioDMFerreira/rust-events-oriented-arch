@@ -14,15 +14,12 @@ diesel = { version = "2.1.1", features = [
   "chrono",
 ] }
 feed-rs = "1.3.0"
-futures = "0.3.28"
-reqwest = "0.11.20"
 serde = { version = "1.0.188", features = ["derive"] }
 tokio = { version = "1.32.0", features = ["full"] }
 uuid = { version = "1.4.1", features = ["v4", "serde"] }
-utils = { path = "../utils", features = ["broker", "database"] }
+utils = { path = "../utils", features = ["broker", "database", "news"] }
 chrono = "0.4.31"
 log = "0.4.20"
-tokio-cron-scheduler = "0.9.4"
 actix-web = "4.4.0"
 mockito = "1.2.0"
 mockall = "0.11.4"

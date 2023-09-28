@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use bytes::{Buf, Bytes};
 use feed_rs::model::Feed;
 use feed_rs::parser;
@@ -5,21 +6,28 @@ use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use log::debug;
 use log::error;
+use mockall::automock;
 use reqwest::get;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::Semaphore;
 use utils::error::CommonError;
 use utils::error::HttpError;
-use uuid::Uuid;
 
-use crate::models::feed::Feed as RssFeed;
-use crate::models::news::News;
+use utils::news::models::feed::Feed as RssFeed;
+use utils::news::models::news::News;
+
+#[automock]
+#[async_trait]
+pub trait FeedsScrapper: Send + Sync {
+    async fn scrap_all(&self, feeds: Vec<RssFeed>, tx: Sender<Vec<News>>) -> Result<(), String>;
+}
 
 #[derive(Clone)]
-pub struct Scrapper {}
+pub struct RssScrapper {}
 
-impl Scrapper {
-    pub async fn scrap_all(feeds: Vec<RssFeed>, tx: Sender<Vec<News>>) -> Result<(), String> {
+#[async_trait]
+impl FeedsScrapper for RssScrapper {
+    async fn scrap_all(&self, feeds: Vec<RssFeed>, tx: Sender<Vec<News>>) -> Result<(), String> {
         let max_concurrency = 5; // Define the maximum concurrency limit
 
         let semaphore = Semaphore::new(max_concurrency);
@@ -41,35 +49,10 @@ impl Scrapper {
                     let mut news = Vec::new();
 
                     for feed_news in feed.entries {
-                        let mut author = "".to_string();
-                        let mut url = "".to_string();
-                        let mut title = "".to_string();
-                        let mut publish_date = chrono::Utc::now().naive_local().date();
+                        let mut news_entry: News = feed_news.into();
+                        news_entry.feed_id = rss_feed.id;
 
-                        if !feed_news.authors.is_empty() {
-                            author = feed_news.authors[0].name.clone();
-                        }
-
-                        if let Some(source) = feed_news.source {
-                            url = source;
-                        }
-
-                        if let Some(news_title) = feed_news.title {
-                            title = news_title.content.to_string();
-                        }
-
-                        if let Some(date) = feed_news.published {
-                            publish_date = date.naive_local().date();
-                        }
-
-                        news.push(News {
-                            id: Uuid::new_v4(),
-                            author,
-                            url,
-                            title,
-                            feed_id: rss_feed.id,
-                            publish_date: Some(publish_date),
-                        })
+                        news.push(news_entry)
                     }
 
                     if let Err(err) = tx.send(news).await {
@@ -87,6 +70,18 @@ impl Scrapper {
 
         Ok(())
     }
+}
+
+impl Default for RssScrapper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl RssScrapper {
+    pub fn new() -> Self {
+        RssScrapper {}
+    }
 
     async fn scrap_with_retry(
         rss_feed: RssFeed,
@@ -95,7 +90,7 @@ impl Scrapper {
         let mut retry_count = 0;
 
         loop {
-            let result = Scrapper::scrap(&rss_feed).await;
+            let result = RssScrapper::scrap(&rss_feed).await;
 
             if let Ok(feed) = result {
                 drop(permit); // Release the semaphore permit

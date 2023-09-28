@@ -26,11 +26,8 @@ impl EventService for KafkaEventService {
     async fn user_created(&self, user: User) -> Result<(), BrokerError> {
         let json_string = serde_json::to_string(&user).unwrap();
 
-        let delivery_status = broker::send_message_to_topic(
-            self.producer.clone(),
-            String::from("user_created"),
-            json_string,
-        );
+        let delivery_status =
+            broker::send_message_to_topic(self.producer.clone(), "user_created", json_string);
 
         match delivery_status.await {
             Err((err, _)) => {

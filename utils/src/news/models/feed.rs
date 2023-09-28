@@ -1,4 +1,4 @@
-use crate::schema::feeds;
+use crate::news::schema::feeds;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 

@@ -171,7 +171,7 @@ mod tests {
 
         let user_service: Arc<dyn UserService> = Arc::new(user_service);
 
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .app_data(web::Data::from(user_service.clone()))
                 .service(get_users),
@@ -179,7 +179,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::get().uri("/users").to_request();
-        let resp = test::call_service(&mut app, req).await;
+        let resp = test::call_service(&app, req).await;
 
         assert_eq!(resp.status(), case.expected_status);
 
@@ -228,7 +228,7 @@ mod tests {
 
         let user_service: Arc<dyn UserService> = Arc::new(user_service);
 
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .app_data(web::Data::from(user_service.clone()))
                 .service(get_user_by_id),
@@ -238,7 +238,7 @@ mod tests {
         let req = test::TestRequest::get()
             .uri(format!("/users/{}", case.id).as_str())
             .to_request();
-        let resp = test::call_service(&mut app, req).await;
+        let resp = test::call_service(&app, req).await;
 
         assert_eq!(resp.status(), case.expected_status);
 
@@ -306,7 +306,7 @@ mod tests {
 
         let user_service: Arc<dyn UserService> = Arc::new(user_service);
 
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .app_data(web::Data::from(user_service.clone()))
                 .service(create_user),
@@ -318,7 +318,7 @@ mod tests {
             .insert_header(("content-type", "application/json"))
             .set_payload(serde_json::to_vec(&case.payload).unwrap())
             .to_request();
-        let resp = test::call_service(&mut app, req).await;
+        let resp = test::call_service(&app, req).await;
 
         assert_eq!(resp.status(), case.expected_status);
 
@@ -385,7 +385,7 @@ mod tests {
 
         let user_service: Arc<dyn UserService> = Arc::new(user_service);
 
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .app_data(web::Data::from(user_service.clone()))
                 .service(update_user),
@@ -397,7 +397,7 @@ mod tests {
             .insert_header(("content-type", "application/json"))
             .set_payload(serde_json::to_vec(&case.payload).unwrap())
             .to_request();
-        let resp = test::call_service(&mut app, req).await;
+        let resp = test::call_service(&app, req).await;
 
         assert_eq!(resp.status(), case.expected_status);
 
@@ -440,7 +440,7 @@ mod tests {
 
         let user_service: Arc<dyn UserService> = Arc::new(user_service);
 
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .app_data(web::Data::from(user_service.clone()))
                 .service(delete_user),
@@ -450,7 +450,7 @@ mod tests {
         let req = test::TestRequest::delete()
             .uri(format!("/users/{}", case.id).as_str())
             .to_request();
-        let resp = test::call_service(&mut app, req).await;
+        let resp = test::call_service(&app, req).await;
 
         assert_eq!(resp.status(), case.expected_status);
 

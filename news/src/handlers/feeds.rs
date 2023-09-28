@@ -2,7 +2,7 @@ use actix_web::{get, web, HttpResponse};
 use log::error;
 use utils::error::CommonError;
 
-use crate::repositories::feed_repository::FeedRepository;
+use utils::news::repositories::feed_repository::FeedRepository;
 
 #[get("/feeds")]
 async fn get_feeds(feed_repo: web::Data<dyn FeedRepository>) -> HttpResponse {
@@ -29,8 +29,8 @@ mod tests {
     use utils::http::test_utils::HttpTestCase;
     use uuid::Uuid;
 
-    use crate::models::feed::Feed;
-    use crate::repositories::feed_repository::MockFeedRepository;
+    use utils::news::models::feed::Feed;
+    use utils::news::repositories::feed_repository::MockFeedRepository;
 
     struct GetFeedsTestCase {
         http_case: HttpTestCase,

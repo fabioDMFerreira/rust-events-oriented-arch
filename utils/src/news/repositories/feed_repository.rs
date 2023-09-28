@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
+use crate::db::PgPool;
+use crate::error::DatabaseError;
 use diesel::prelude::*;
 use mockall::automock;
-use utils::db::PgPool;
-use utils::error::DatabaseError;
 use uuid::Uuid;
 
-use crate::models::feed::Feed;
-use crate::schema::feeds;
+use crate::news::models::feed::Feed;
+use crate::news::schema::feeds;
 
 #[automock]
 pub trait FeedRepository: Send + Sync {

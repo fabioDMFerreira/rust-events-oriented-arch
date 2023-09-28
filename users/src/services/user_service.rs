@@ -397,7 +397,7 @@ mod tests {
         let service_result = case.service_result.clone();
         repo_mock
             .expect_update()
-            .with(eq(case.id.clone()), eq(case.update.clone()))
+            .with(eq(case.id), eq(case.update.clone()))
             .returning(move |_, _| service_result.clone());
 
         // Create the UserServiceImpl with the mocks
@@ -436,7 +436,7 @@ mod tests {
         let service_result = case.service_result.clone();
         repo_mock
             .expect_delete()
-            .with(eq(case.id.clone()))
+            .with(eq(case.id))
             .returning(move |_| service_result.clone());
 
         // Create the UserServiceImpl with the mocks
