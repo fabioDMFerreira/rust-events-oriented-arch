@@ -37,6 +37,7 @@ impl<'a> Processor for NewsWebsocketProcessor<'a> {
             Ok(subscriptions) => {
                 for s in subscriptions {
                     debug!("sending message to socket {}", s.user_id);
+                    // TODO: send messages concurrently
                     self.websocket_server
                         .do_send(SessionMessage {
                             id: s.user_id.to_string(),

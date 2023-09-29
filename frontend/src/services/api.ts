@@ -124,8 +124,12 @@ class API {
   }
 
   connectWs(onMessage: (event: MessageEvent<any>) => void) {
-    const socket = new WebSocket('ws://localhost:8001/connect-ws');
-    // const socket = new WebSocket(`ws://${window.location.host}/connect-ws`);
+    let socket: WebSocket;
+    if (process.env.NODE_ENV === 'development') {
+      socket = new WebSocket('ws://localhost:8001/connect-ws');
+    } else {
+      socket = new WebSocket(`ws://${window.location.host}/connect-ws`);
+    }
 
     let interval: string | number | NodeJS.Timer | undefined;
 

@@ -5,11 +5,27 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/use-regex: 'true'
     nginx.ingress.kubernetes.io/rewrite-target: /$1$2
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
 spec:
   rules:
     - host: rust-xp.com
       http:
         paths:
+          - path: /()(connect-ws)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: news-service
+                port:
+                  number: 8001
+          - path: /api/(subscriptions)(/|.*)?
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: news-service
+                port:
+                  number: 8001
           - path: /api/(feeds)(/|.*)?
             pathType: ImplementationSpecific
             backend:
@@ -32,13 +48,6 @@ spec:
                 port:
                   number: 8000
           - path: /api/(auth)(/.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: users-service
-                port:
-                  number: 8000
-          - path: /()(ws)
             pathType: ImplementationSpecific
             backend:
               service:

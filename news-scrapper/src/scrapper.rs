@@ -90,7 +90,7 @@ impl RssScrapper {
         let mut retry_count = 0;
 
         loop {
-            let result = RssScrapper::scrap(&rss_feed).await;
+            let result = RssScrapper::scrap(rss_feed.url.to_string()).await;
 
             if let Ok(feed) = result {
                 drop(permit); // Release the semaphore permit
@@ -106,8 +106,8 @@ impl RssScrapper {
         }
     }
 
-    async fn scrap(rss_feed: &RssFeed) -> Result<Feed, CommonError> {
-        let xml = http_request(rss_feed.url.clone()).await?;
+    async fn scrap(feed_url: String) -> Result<Feed, CommonError> {
+        let xml = http_request(feed_url.clone()).await?;
 
         parser::parse(xml.reader()).map_err(|err| CommonError {
             message: err.to_string(),

@@ -44,7 +44,7 @@ spec:
       volumes:
         - name: init-scripts-volume
           hostPath:
-            path: /Users/fabioferreira/Projects/rust-noob/db-init-scripts
+            path: /Users/fabioferreira/Projects/rust-noob/infra/db-init-scripts
             type: Directory
 ---
 
