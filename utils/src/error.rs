@@ -7,6 +7,7 @@ pub const HTTP_ERROR_CODE: u32 = 3;
 pub const AUTH_TOKEN_ENCODING_CODE: u32 = 4;
 pub const WS_ERROR_CODE: u32 = 5;
 pub const SERIALIZATION_ERROR_CODE: u32 = 6;
+pub const ASYNC_OPERATIONS_ERROR_CODE: u32 = 7;
 
 #[derive(Debug, Serialize, Clone, PartialEq)]
 pub struct CommonError {

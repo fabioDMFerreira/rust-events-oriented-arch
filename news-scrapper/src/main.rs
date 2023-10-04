@@ -1,6 +1,9 @@
-mod config;
-mod news_ingestor;
-mod scrapper;
+use news_scrapper::{
+    config::Config,
+    http_fetcher::HttpFetcher,
+    news_ingestor::NewsIngestor,
+    scrapper::{RssFetcher, RssScrapper},
+};
 use std::{error::Error, sync::Arc, thread};
 use tokio_cron_scheduler::{Job, JobScheduler};
 use utils::{
@@ -22,7 +25,7 @@ use utils::{
 
 #[tokio::main]
 async fn main() {
-    let config = config::Config::init();
+    let config = Config::init();
 
     init_logger(config.logs_path.clone());
 
@@ -46,9 +49,11 @@ async fn main() {
         events_service.clone(),
     ));
 
-    let feeds_scrapper = Arc::new(scrapper::RssScrapper::default());
+    let rss_fetcher: Arc<dyn RssFetcher> = Arc::new(HttpFetcher::default());
 
-    let ingestor = news_ingestor::NewsIngestor::new(service, feeds_scrapper);
+    let feeds_scrapper = Arc::new(RssScrapper::new(rss_fetcher.clone()));
+
+    let ingestor = NewsIngestor::new(service, feeds_scrapper);
 
     if let Err(err) = setup_cronjobs(&ingestor).await {
         panic!("failed setup cronjobs: {}", err);
@@ -57,7 +62,7 @@ async fn main() {
     thread::park();
 }
 
-async fn setup_cronjobs(ingestor: &news_ingestor::NewsIngestor) -> Result<(), Box<dyn Error>> {
+async fn setup_cronjobs(ingestor: &NewsIngestor) -> Result<(), Box<dyn Error>> {
     let ingestor = ingestor.clone();
 
     let sched = JobScheduler::new().await?;
